@@ -51,8 +51,6 @@ namespace GnosiaArchipelagoRandomizer.Utils
                 player = ReInput.players.GetPlayer(0);
                 var keyboard = player.controllers.GetController<Keyboard>(0);
 
-                Plugin.BepinLogger.LogInfo($"{keyboard}");
-
                 if (keyboard.GetKeyDown(KeyCode.UpArrow))
                 {
                     NavigateHistory(-1);

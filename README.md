@@ -20,6 +20,13 @@ These are the objectives you need to complete to find a MultiWorld item:
 On top of the obvious randomizer changes, there are a couple of additional modifications that were made to make the mod more enjoyable to play:
 - Reaching the Normal Ending now requires only a percentage of the total notes, defined in the yaml settings for your slot (You can still set it to 100% if you want)
 - More QOL changes will be added in later versions (Making events more common is one of the planned changes)
+## Future Plans
+- Less wait between events (at least as an option) & Better Event Search
+- Character Stats & Personality randomizer
+- (Maybe) Character skills and skill requirements randomizer
+- More items and locations
+- Traps! (Give me suggestions for interesting traps)
+- Better UI / tracker (??? Very far future)
 ## How to install
 - First of all, install the [AP World](https://github.com/Mat8071/Gnosia-Archipelago-Randomizer/releases) and make a yaml using the [Options Creator](https://archipelago.gg/tutorial/Archipelago/other_en#options-creator).
 - Then, install [BepInEx](https://github.com/BepInEx/BepInEx/releases) in your game's installation folder.
@@ -45,6 +52,8 @@ Before you report this as a logic bug, try doing the following:
 - If the event requires some characters to be present, type `/force_chara {Character1} {Character2} {...}` (even if you already forced their role)
 
 If the event still does not trigger after a couple of loops, please report this as a logic bug.
+### When I try to use the console, the game advances on its own
+This is a known issue. You can "fix" it by typing `/block_mkb on` in the console. This will, however, make it impossible to advance events by clicking with the mouse. To deactivate this, type `/block_mkb off` in the console.
 ### What items should I hint for if I'm stuck?
 On top of the obvious items (Roles, and Characters / Progressive Crew Max), there are a few items that are more important than they might look at first:
 1. Bug Role (Around half of the events are secretly locked by unlocking it and it's hard-required for both respeccing and reaching the game's ending)
@@ -57,3 +66,5 @@ If you can't avoid the event that froze the game, try restarting from setup
 ### An event doesn't appear anymore after I received a DeathLink during it!
 First of all, try the steps for "An event is in logic but hasn't happened for many loops" as that may fix the problem.
 If that doesn't fix it, report the bug, get the ID of the event that doesn't appear anymore (if you don't know how to find it, I will tell it to you when you report the bug) and type in the console `/reset_scenario {ID}`.
+### Can I toggle DeathLink mid-run?
+Yes. Just open the in-game console and type `/deathlink on` to activate it and `/deathlink off` to deactivate it.

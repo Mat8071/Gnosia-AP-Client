@@ -1,0 +1,21 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.cache
+*.tmp
+
+# Build output
+bin/
+obj/
+
+# Rider / JetBrains (just in case)
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# NuGet
+*.nupkg
+packages/

@@ -1,0 +1,214 @@
+﻿using System;
+using System.Collections.Generic;
+using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
+using BepInEx;
+using coreSystem;
+using gnosia;
+using setting;
+using HarmonyLib;
+using UnityEngine;
+using GnosiaArchipelagoRandomizer.Patches.DeathLink;
+
+namespace GnosiaArchipelagoRandomizer.Archipelago
+{
+    public class DeathLinkHandler
+    {
+        private static bool deathLinkEnabled;
+        private string slotName;
+        private readonly DeathLinkService service;
+        private readonly Queue<DeathLink> deathLinks = new();
+        private Harmony harmony = new Harmony(Plugin.PluginGUID + ".deathlink");
+
+        /// <summary>
+        /// instantiates our death link handler, sets up the hook for receiving death links, and enables death link if needed
+        /// </summary>
+        /// <param name="deathLinkService">The new DeathLinkService that our handler will use to send and
+        /// receive death links</param>
+        /// <param name="enableDeathLink">Whether we should enable death link or not on startup</param>
+        public DeathLinkHandler(DeathLinkService deathLinkService, string name, bool enableDeathLink = false)
+        {
+            service = deathLinkService;
+            service.OnDeathLinkReceived += DeathLinkReceived;
+            slotName = name;
+            deathLinkEnabled = enableDeathLink;
+
+            if (deathLinkEnabled)
+            {
+                service.EnableDeathLink();
+                harmony.CreateClassProcessor(typeof(DeathLinkPatch)).Patch();
+                Plugin.BepinLogger.LogInfo("DeathLink Activated!");
+            }
+        }
+
+        public bool IsDeathLinkEnabled()
+        {
+            return deathLinkEnabled;
+        }
+
+        /// <summary>
+        /// enables/disables death link
+        /// </summary>
+        public void ToggleDeathLink()
+        {
+            deathLinkEnabled = !deathLinkEnabled;
+
+            if (deathLinkEnabled)
+            {
+                service.EnableDeathLink();
+                harmony.CreateClassProcessor(typeof(DeathLinkPatch)).Patch();
+                Plugin.BepinLogger.LogInfo("DeathLink Activated!");
+            }
+            else
+            {
+                service.DisableDeathLink();
+                harmony.UnpatchSelf();
+                Plugin.BepinLogger.LogInfo("DeathLink Deactivated!");
+            }
+        }
+
+        /// <summary>
+        /// what happens when we receive a deathLink
+        /// </summary>
+        /// <param name="deathLink">Received Death Link object to handle</param>
+        private void DeathLinkReceived(DeathLink deathLink)
+        {
+            deathLinks.Enqueue(deathLink);
+
+            Plugin.BepinLogger.LogDebug(deathLink.Cause.IsNullOrWhiteSpace()
+                ? $"Received Death Link from: {deathLink.Source}"
+                : deathLink.Cause);
+
+            //For now, just try to kill the player regardless
+            KillPlayer();
+        }
+
+        /// <summary>
+        /// can be called when in a valid state to kill the player, dequeueing and immediately killing the player with a
+        /// message if we have a death link in the queue
+        /// </summary>
+        public void KillPlayer()
+        {
+            try
+            {
+                if (deathLinks.Count < 1) return;
+
+                var deathLink = deathLinks.Dequeue();
+                var cause = deathLink.Cause.IsNullOrWhiteSpace() ? GetDeathLinkCause(deathLink) : deathLink.Cause;
+
+                KillPlayer(cause);
+            }
+            catch (Exception e)
+            {
+                Plugin.BepinLogger.LogError(e);
+            }
+        }
+
+
+        public void KillPlayer(string cause)
+        {
+            //Get gd and sp
+            gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
+            ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
+            //Check if another deathlink is already happening
+            if ((gd.baseData.sce_all_flg & 1UL) != 0)
+                return;
+            //Check if state is ok for killing player
+            if (gd.personFromId[0] >= 0 && gd.baseData.state > 4 && gd.baseData.state < 35)
+            {
+                //Don't kill the player during tutorial loops or things could break
+                if (gd.baseData.loop < 14)
+                    return;
+                //Otherwise insert killing the player (+ fx) in the script queue
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    //Set player status to "Eliminated"
+                    gnosia.GameData.character player = gd.chara[gd.personFromId[0]];
+                    player.doa = setting.Setting.Doa.doa_Kamare;
+                    gd.chara[gd.personFromId[0]] = player;
+                    gd.RemakePeopleFlg();
+                    //Play sfx and music and prepare for vfx
+                    sp.m_sm.PlaySe("se_jin_06", 1f);
+                    sp.m_sm.FadeBgm(-1f, 0f, 3.5f, true, -1);
+                    return true;
+                }, (float e) => true, false));
+                //Do a screen animation
+                sp.SetFadeScreen(new List<uint>(sp.m_sb.Keys), 50000U, 1.6f, 100, true, true, false);
+                //Show message with cause
+                sp.SetDialogScreen(50400U, cause, 1, false);
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    //Mark deathlink death with an unused flag
+                    gd.baseData.sce_all_flg |= 1UL;
+                    return true;
+                }, (float e) => true, false));
+                //End Loop
+                gd.stopScenario = true;
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    sp.SetColorScreen(255U, 50000U, -1);
+                    return true;
+                }, (float e) => true, false));
+                sp.LoadTexture("result");
+                sp.WaitLoad();
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    sp.SetScreen(Setting.Screen.s_Result, 100U, true, false, -1);
+                    return true;
+                }, (float e) => true, true));
+                sp.SetFadeScreen(new List<uint> { 50000U }, 50001U, 0.25f, 0, true, true, true);
+                //Log
+                Plugin.BepinLogger.LogMessage(cause);
+            }
+            else
+                Plugin.BepinLogger.LogInfo("DeathLink skipped due to invalid state");
+        }
+
+
+        /// <summary>
+        /// returns message for the player to see when a death link is received without a cause
+        /// </summary>
+        /// <param name="deathLink">death link object to get relevant info from</param>
+        /// <returns></returns>
+        private string GetDeathLinkCause(DeathLink deathLink)
+        {
+            return $"Received death from {deathLink.Source}";
+        }
+
+        /// <summary>
+        /// called to send a death link to the multiworld
+        /// </summary>
+        public void SendDeathLink()
+        {
+            try
+            {
+                if (!deathLinkEnabled) return;
+
+                Plugin.BepinLogger.LogMessage("sharing your death...");
+
+                //Get gd
+                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
+                // add the cause here
+                var cause = "";
+                if (gd.personFromId[0] >= 0)
+                {
+                    gnosia.GameData.character player = gd.chara[gd.personFromId[0]];
+                    if (player.doa == setting.Setting.Doa.doa_Kamare)
+                        if (player.i_yaku != setting.Setting.Yakuwari.y_Fox)
+                            cause = $"{slotName} has been... eliminated by the Gnosia";
+                        else
+                            cause = $"The engineer has discovered that {slotName} is a Bug and has eliminated them";
+                    else if (player.doa == setting.Setting.Doa.doa_Shokei)
+                        cause = $"The crew has decided to put {slotName} into cold sleep";
+                }
+
+                var linkToSend = new DeathLink(slotName, cause);
+
+                service.SendDeathLink(linkToSend);
+            }
+            catch (Exception e)
+            {
+                Plugin.BepinLogger.LogError(e);
+            }
+        }
+    }
+}

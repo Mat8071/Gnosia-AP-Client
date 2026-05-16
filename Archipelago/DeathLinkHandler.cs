@@ -8,6 +8,9 @@ using setting;
 using HarmonyLib;
 using UnityEngine;
 using GnosiaArchipelagoRandomizer.Patches.DeathLink;
+using application;
+using UnityEngine.UI;
+using baseEffect.graphics;
 
 namespace GnosiaArchipelagoRandomizer.Archipelago
 {
@@ -131,8 +134,81 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     sp.m_sm.FadeBgm(-1f, 0f, 3.5f, true, -1);
                     return true;
                 }, (float e) => true, false));
-                //Do a screen animation
-                sp.SetFadeScreen(new List<uint>(sp.m_sb.Keys), 50000U, 1.6f, 100, true, true, false);
+                //Do a screen animation (safely)
+                uint _to = 50000U;
+                float fadeTime = 1.6f;
+                int fadeType = 100;
+                bool waitFinish = true;
+                bool deleteOldScreen = true;
+                bool canSkip = false;
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    //Try catch just in case so the game does not freeze
+                    try
+                    {
+                        //Getting the list directly in the script queue
+                        List<uint> _from = new List<uint>(sp.m_sb.Keys);
+                        //Base method
+                        sp.isFading = true;
+                        GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(sp.m_rs.baseScreenPrefab, sp.m_rs.ParentObj[0].transform);
+                        gameObject.GetComponent<Canvas>().sortingOrder = Traverse.Create(sp).Method("GetDepth", new object[] { (int)_to }).GetValue<int>();
+                        gameObject.GetComponent<Canvas>().worldCamera = sp.m_rs.mainCamera;
+                        int fadeScreenEnableId = sp.m_rs.GetFadeScreenEnableId();
+                        sp.m_rs.SetFadeScreenEnable(fadeScreenEnableId, Traverse.Create(sp).Method("GetDepth", new object[] { (int)_to }).GetValue<int>());
+                        gameObject.name = "FadeScreenCanvas" + _to;
+                        FadeScreen fadeScreen = gameObject.AddComponent<FadeScreen>();
+                        fadeScreen.screenId = fadeScreenEnableId;
+                        gameObject.layer = ((fadeScreenEnableId == 0) ? fadeScreen.CopyLayer : fadeScreen.Copy2Layer);
+                        sp.SetScreen(fadeScreen, _to, false);
+                        foreach (uint num in _from)
+                        {
+                            foreach (object obj in sp.m_sb[num].gameObject.transform)
+                            {
+                                Transform transform = (Transform)obj;
+                                if (!transform.gameObject.name.Contains("threshold") && !transform.gameObject.name.Contains("bugFadeImg"))
+                                {
+                                    GameObject gameObject2 = UnityEngine.Object.Instantiate<GameObject>(transform.gameObject, fadeScreen.gameObject.transform);
+                                    Vector2 vector = sp.m_sb[num].GetComponent<RectTransform>().localScale;
+                                    float num2 = gameObject2.transform.localScale.x * vector.x;
+                                    float num3 = gameObject2.transform.localScale.y * vector.y;
+                                    gameObject2.transform.localScale = new Vector3(num2, num3, 1f);
+                                    Vector3 anchoredPosition3D = gameObject2.GetComponent<RectTransform>().anchoredPosition3D;
+                                    Vector3 anchoredPosition3D2 = sp.m_sb[num].GetComponent<RectTransform>().anchoredPosition3D;
+                                    float num4 = anchoredPosition3D2.x - -640f;
+                                    float num5 = anchoredPosition3D2.y - 360f;
+                                    num4 = anchoredPosition3D.x * vector.x + num4;
+                                    num5 = anchoredPosition3D.y * vector.y + num5;
+                                    gameObject2.GetComponent<RectTransform>().anchoredPosition3D = new Vector3(num4, num5, 0f);
+                                    if (gameObject2.GetComponent<Image>() != null)
+                                    {
+                                        gameObject2.GetComponent<Image>().material = sp.m_rs.uiDefaultMat;
+                                    }
+                                }
+                            }
+                        }
+                        fadeScreen.SetTexture(0, fadeScreen.gameObject.transform, 0U, fadeScreen.textureName, null, null);
+                        fadeScreen.m_spriteMap[0U].m_type = Sprite2dEffectArg.SpriteType.k_SpriteTypeCopy;
+                        fadeScreen.SetFadeMaterial(fadeScreenEnableId);
+                        fadeScreen.NotifyFinish(fadeTime, fadeType, false);
+                        if (deleteOldScreen)
+                        {
+                            foreach (uint num6 in _from)
+                            {
+                                sp.RemoveScreen(num6);
+                            }
+                        }
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Plugin.BepinLogger.LogError($"Error during deathlink animation!\n\n{ex}");
+                        return true;
+                    }
+                }, (float e) => true, true));
+                if (waitFinish)
+                {
+                    sp.WaitFade(new List<uint> { _to }, true, canSkip);
+                }
                 //Show message with cause
                 sp.SetDialogScreen(50400U, cause, 1, false);
                 sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)

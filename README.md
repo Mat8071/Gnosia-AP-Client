@@ -69,7 +69,7 @@ On top of the obvious items (Roles, and Characters / Progressive Crew Max), ther
 ### The game froze and I can't do anything!
 If this happens, please report the bug so I can fix it. In the meantime, you can probably close the game, reopen and reconnect and load a previous file.
 #### If the freeze only happens during a particular event:
-Avoid the event that froze the game and if necessary, use !send to complete locations inside it.
+Avoid the event that froze the game and if necessary, use `/send_location` in the host console (outside the game) to complete locations inside it.
 If you can't avoid the event that froze the game, try restarting from setup.
 #### If the freeze happened after receiving a DeathLink:
 If the game does not freeze often and you care about deathlink you can try keeping it on. Otherwise, you can disable deathlink by typing `/deathlink off` in the in-game console. Even if you don't care about the freezes, please report the bug anyway!

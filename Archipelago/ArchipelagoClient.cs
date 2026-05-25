@@ -13,6 +13,8 @@ using HarmonyLib;
 using UnityEngine;
 using GnosiaArchipelagoRandomizer.Patches.Optional;
 using Archipelago.MultiClient.Net.Models;
+using HarmonyLib.Tools;
+using gnosia;
 
 namespace GnosiaArchipelagoRandomizer.Archipelago
 {
@@ -111,13 +113,6 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 ServerData.SetupSession(success.SlotData, session.RoomState.Seed);
                 Authenticated = true;
 
-                if (Plugin.Application != null)
-                {
-                    //Start the title screen and stuff
-                    Traverse.Create(Plugin.Application).Method("Start").GetValue();
-                    Plugin.BepinLogger.LogInfo("Game should start now");
-                }
-
                 //Goal if somehow you lost connection, goaled offline and reconnected
                 if (Plugin.IsGoalCompleted())
                 {
@@ -126,6 +121,7 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
 
                 bool enableDeathLink = false;
 
+                //We need to get the settings before starting the title screen or the patches won't apply
                 try
                 {
                     //Get settings
@@ -143,6 +139,7 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     if (Convert.ToBoolean(slotData["allow_gender_specific_logic"]))
                     {
                         harmony.CreateClassProcessor(typeof(MoreRespecPatch)).Patch();
+                        harmony.CreateClassProcessor(typeof(ReCharacterCreationPatch)).Patch();
                         Plugin.BepinLogger.LogInfo("MoreRespecPatch Applied!");
                     }
                     switch (Convert.ToInt64(slotData["goal"]))
@@ -160,6 +157,13 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 catch (Exception e)
                 {
                     Plugin.BepinLogger.LogError(e);
+                }
+
+                if (Plugin.Application != null)
+                {
+                    //Start the title screen and stuff
+                    Traverse.Create(Plugin.Application).Method("Start").GetValue();
+                    Plugin.BepinLogger.LogInfo("Game should start now");
                 }
 
                 DeathLinkHandler = new(session.CreateDeathLinkService(), ServerData.SlotName, enableDeathLink);

@@ -71,6 +71,7 @@ namespace GnosiaArchipelagoRandomizer
             //Apply core patches
             var harmony = new Harmony(PluginGUID + ".core");
 
+            harmony.CreateClassProcessor(typeof(AfterBugAllRolesPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CrewLimitCursorPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CrewLimitPatch)).Patch();
             harmony.CreateClassProcessor(typeof(DefaultToSlotNamePatch)).Patch();

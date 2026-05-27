@@ -35,7 +35,7 @@ More QOL changes will be added in later versions (Making events more common is o
 - Traps! (Give me suggestions for interesting traps)
 - Better UI / tracker (??? Very far future)
 ## How to install
-- First of all, install the [AP World](https://github.com/Mat8071/Gnosia-Archipelago-Randomizer/releases) and make a yaml using the [Options Creator](https://archipelago.gg/tutorial/Archipelago/other_en#options-creator).
+- First of all, install the [AP World](https://github.com/Mat8071/Gnosia-Archipelago-Randomizer/releases) and make a yaml using the [Options Creator](https://archipelago.gg/tutorial/Archipelago/other_en#options-creator) or a similar tool.
 - Then, install [BepInEx](https://github.com/BepInEx/BepInEx/releases) in your game's installation folder.
 - Run the game once with BepInEx installed.
 - Download the [Client](https://github.com/Mat8071/Gnosia-AP-Client/releases).

@@ -100,6 +100,10 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
             {
                 var success = (LoginSuccessful)result;
 
+                //Save connection info for next time
+                ConnectionInfo info = new ConnectionInfo { Uri = ServerData.Uri, SlotName = ServerData.SlotName };
+                Plugin.SaveConnectionInfo(info);
+
                 //Check if trying to change slot
                 if (ServerData.GetSeed() != null && session.RoomState.Seed != ServerData.GetSeed())
                 {

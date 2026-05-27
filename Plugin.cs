@@ -21,6 +21,8 @@ using HarmonyLib.Tools;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
+using System.IO;
+using Newtonsoft.Json;
 
 namespace GnosiaArchipelagoRandomizer
 {
@@ -89,6 +91,14 @@ namespace GnosiaArchipelagoRandomizer
             harmony.CreateClassProcessor(typeof(WWGRequirementsPatch)).Patch();
 
             BepinLogger.LogInfo("Core Patches Applied!");
+
+            //Load last-used connection info
+            ConnectionInfo info = LoadConnectionInfo();
+            if (info != null)
+            {
+                ArchipelagoClient.ServerData.Uri = info.Uri;
+                ArchipelagoClient.ServerData.SlotName = info.SlotName;
+            }
         }
 
         private void Update()
@@ -466,10 +476,48 @@ namespace GnosiaArchipelagoRandomizer
                 }
             }
         }
+
+        public static void SaveConnectionInfo(ConnectionInfo info)
+        {
+            string SaveDirectory = $"{UnityEngine.Application.persistentDataPath}/Archipelago";
+            string FilePath = $"{SaveDirectory}/last_connection.json";
+            if (!Directory.Exists(SaveDirectory))
+            {
+                //Archipelago Directory does not exist. Let's create it
+                Directory.CreateDirectory(SaveDirectory);
+            }
+            string json = JsonConvert.SerializeObject(info, Formatting.Indented);
+            File.WriteAllText(FilePath, json);
+        }
+
+        public static ConnectionInfo LoadConnectionInfo()
+        {
+            string SaveDirectory = $"{UnityEngine.Application.persistentDataPath}/Archipelago";
+            string FilePath = $"{SaveDirectory}/last_connection.json";
+            if (!Directory.Exists(SaveDirectory))
+            {
+                //Archipelago Directory does not exist. Let's create it
+                Directory.CreateDirectory(SaveDirectory);
+            }
+            if (!File.Exists(FilePath))
+            {
+                //File Does Not Exist! Nothing to load
+                return null;
+            }
+            string json = File.ReadAllText(FilePath);
+            return JsonConvert.DeserializeObject<ConnectionInfo>(json);
+        }
     }
     public class MessageData
     {
         public string message;
         public int type;
+    }
+
+    public class ConnectionInfo
+    {
+        public string Uri;
+        public string SlotName;
+        //Do not save the password
     }
 }

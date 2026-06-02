@@ -11,6 +11,7 @@ using GnosiaArchipelagoRandomizer.Patches.DeathLink;
 using application;
 using UnityEngine.UI;
 using baseEffect.graphics;
+using GnosiaArchipelagoRandomizer.Utils;
 
 namespace GnosiaArchipelagoRandomizer.Archipelago
 {
@@ -109,6 +110,8 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
 
         public void KillPlayer(string cause)
         {
+            //Show the deathlink cause in the console (regardless of whether it works)
+            ArchipelagoConsole.LogMessage(cause);
             //Get gd and sp
             gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
             ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
@@ -116,12 +119,14 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
             if ((gd.baseData.sce_all_flg & 1UL) != 0)
                 return;
             //Check if state is ok for killing player
-            if (gd.personFromId[0] >= 0 && gd.baseData.state > 4 && gd.baseData.state < 35)
+            if (gd.personFromId[0] >= 0 && gd.baseData.state > 4 && gd.baseData.state < 32)
             {
                 //Don't kill the player during tutorial loops or things could break
                 if (gd.baseData.loop < 14)
                     return;
-                //Otherwise insert killing the player (+ fx) in the script queue
+                //Mark deathlink death with an unused flag
+                gd.baseData.sce_all_flg |= 1UL;
+                //Insert killing the player (+ fx) in the script queue
                 sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
                 {
                     //Set player status to "Eliminated"
@@ -213,8 +218,12 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 sp.SetDialogScreen(50400U, cause, 1, false);
                 sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
                 {
-                    //Mark deathlink death with an unused flag
-                    gd.baseData.sce_all_flg |= 1UL;
+                    //For SetState to work properly, first we need to set seState to ss_init
+                    //This is because of how ScenarioEngineObj works
+                    gd.seState = GameData.ScenarioState.ss_init;
+                    //Set state to game finished
+                    gd.SetState(35);
+                    gd.forwardNext = true;
                     return true;
                 }, (float e) => true, false));
                 //End Loop
@@ -269,7 +278,9 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 {
                     gnosia.GameData.character player = gd.chara[gd.personFromId[0]];
                     if (player.doa == setting.Setting.Doa.doa_Kamare)
-                        if (player.i_yaku != setting.Setting.Yakuwari.y_Fox)
+                        if (Jinro.CheckEnd() == 9)
+                            cause = $"Kukrushka has... destroyed everything (including {slotName})";
+                        else if (player.i_yaku != setting.Setting.Yakuwari.y_Fox)
                             cause = $"{slotName} has been... eliminated by the Gnosia";
                         else
                             cause = $"The engineer has discovered that {slotName} is a Bug and has eliminated them";
@@ -280,6 +291,8 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 var linkToSend = new DeathLink(slotName, cause);
 
                 service.SendDeathLink(linkToSend);
+                //Show the deathlink message on the console as well
+                ArchipelagoConsole.LogMessage(cause);
             }
             catch (Exception e)
             {

@@ -186,6 +186,8 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     //We don't need to check if location is already in there cause it's a set now
                     ServerData.CheckedLocations.Add(location);
                 }
+                //Update item state
+                Plugin.UpdateItems();
                 outText = $"Successfully connected to {ServerData.Uri} as {ServerData.SlotName}!";
 
                 ArchipelagoConsole.LogMessage(outText);
@@ -240,8 +242,12 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
             //Check if it's a permanent upgrade
             if (id < 11000)
             {
-                //Update gamedata since we received a permanent item
-                Plugin.UpdateItems();
+                //Check if we're fully done connecting to the server and can read SlotData from Plugin
+                if (Authenticated && !attemptingConnection)
+                {
+                    //Update gamedata since we received a permanent item
+                    Plugin.UpdateItems();
+                }
             }
             else
             {

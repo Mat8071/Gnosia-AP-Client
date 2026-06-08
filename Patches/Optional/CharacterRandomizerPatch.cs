@@ -19,7 +19,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Optional
             {
                 //If this is the bug loop
                 if (scenario.id == 29)
-                    return true; //Don't change anything!!!
+                    __instance.charaUseList.Add(11); //Add Setsu to the loop
             }
             //First let's decide which characters will be in the loop
             if (__instance.charaUseList.Count == 0)

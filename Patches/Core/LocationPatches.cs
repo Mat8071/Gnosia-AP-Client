@@ -8508,11 +8508,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.WaitSec(0.5f, true);
                 sp.PlaySeInScript("se_square", 1f);
                 sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(14, 24, -1), 2, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.sce_all_flg = gd.baseData.sce_all_flg | 256UL;
-                    return true;
-                }, (float e) => sp.GetSelect(0) >= 0, false));
+                Plugin.CheckLocationsInScript(1508);
                 sp.PlaySeInScript("se_square", 1f);
                 sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(14, 25, -1), 3, false);
                 sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
@@ -8521,7 +8517,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.PlaySeInScript("se_square", 1f);
                 sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(14, 26, -1), 1, false);
                 sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                Plugin.CheckLocationsInScript(1508);
                 gd.forwardNext = true;
             };
             __instance.actions[7] = action;

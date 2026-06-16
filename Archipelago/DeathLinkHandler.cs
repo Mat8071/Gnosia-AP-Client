@@ -44,6 +44,11 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
             }
         }
 
+        public void Unsubscribe()
+        {
+            service.OnDeathLinkReceived -= DeathLinkReceived;
+        }
+
         public bool IsDeathLinkEnabled()
         {
             return deathLinkEnabled;

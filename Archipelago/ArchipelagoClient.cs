@@ -39,6 +39,8 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         {
             if (Authenticated || attemptingConnection) return;
 
+            attemptingConnection = true;
+
             try
             {
                 session = ArchipelagoSessionFactory.CreateSession(ServerData.Uri);
@@ -57,7 +59,7 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         /// </summary>
         private void SetupSession()
         {
-            session.MessageLog.OnMessageReceived += message => ArchipelagoConsole.LogMessage(message.ToString());
+            session.MessageLog.OnMessageReceived += OnMessageReceived;
             session.Items.ItemReceived += OnItemReceived;
             session.Socket.ErrorReceived += OnSessionErrorReceived;
             session.Socket.SocketClosed += OnSessionSocketClosed;
@@ -172,6 +174,7 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     Plugin.BepinLogger.LogInfo("Game should start now");
                 }
 
+                DeathLinkHandler?.Unsubscribe();
                 DeathLinkHandler = new(session.CreateDeathLinkService(), ServerData.SlotName, enableDeathLink);
                 //Reset inventory
                 Plugin.inventory.Clear();
@@ -215,11 +218,14 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         /// </summary>
         private void Disconnect()
         {
-            //Unsubscribe from invalid session facts
-            session.MessageLog.OnMessageReceived -= message => ArchipelagoConsole.LogMessage(message.ToString());
-            session.Items.ItemReceived -= OnItemReceived;
-            session.Socket.ErrorReceived -= OnSessionErrorReceived;
-            session.Socket.SocketClosed -= OnSessionSocketClosed;
+            if (session != null)
+            {
+                //Unsubscribe from invalid session facts
+                session.MessageLog.OnMessageReceived -= OnMessageReceived;
+                session.Items.ItemReceived -= OnItemReceived;
+                session.Socket.ErrorReceived -= OnSessionErrorReceived;
+                session.Socket.SocketClosed -= OnSessionSocketClosed;
+            }
             //Base function from the template
             Plugin.BepinLogger.LogDebug("disconnecting from server...");
             session?.Socket.DisconnectAsync();
@@ -230,6 +236,11 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         public void SendMessage(string message)
         {
             session.Socket.SendPacketAsync(new SayPacket { Text = message });
+        }
+
+        private void OnMessageReceived(LogMessage message)
+        {
+            ArchipelagoConsole.LogMessage(message.ToString());
         }
 
         /// <summary>

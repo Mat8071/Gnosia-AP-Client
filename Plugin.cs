@@ -40,6 +40,8 @@ namespace GnosiaArchipelagoRandomizer
 
         //My variables
         public static application.Application Application;
+        public static bool applicationInitialized = false;
+        public static bool loadedSavesAtLeastOnce = false;
 
         //AP Variables
         public static List<long> inventory = new List<long>();
@@ -88,6 +90,7 @@ namespace GnosiaArchipelagoRandomizer
             harmony.CreateClassProcessor(typeof(NoTrophyPatch)).Patch();
             harmony.CreateClassProcessor(typeof(SaveLoadAPDataPatch)).Patch();
             harmony.CreateClassProcessor(typeof(SeparateSavesPatch)).Patch();
+            harmony.CreateClassProcessor(typeof(SimplifyMessagesPatch)).Patch();
             harmony.CreateClassProcessor(typeof(WWGRequirementsPatch)).Patch();
 
             BepinLogger.LogInfo("Core Patches Applied!");
@@ -190,7 +193,6 @@ namespace GnosiaArchipelagoRandomizer
             bool randomize_character_unlocks = false;
             if (slotData != null && slotData.ContainsKey("randomize_character_unlocks"))
             {
-
                 randomize_character_unlocks = Convert.ToBoolean(slotData["randomize_character_unlocks"]);
             }
             else
@@ -248,6 +250,8 @@ namespace GnosiaArchipelagoRandomizer
             //Try updating items right now!
             try
             {
+                if (!loadedSavesAtLeastOnce) //This is to not spam errors on first connection
+                    return;
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
                 UpdateSafeGDItems(gd);
             }
@@ -447,9 +451,16 @@ namespace GnosiaArchipelagoRandomizer
 
         public static async Task CheckLocations(params long[] ids)
         {
-            ArchipelagoSession session = ArchipelagoClient.GetSession();
-            await session.Locations.CompleteLocationChecksAsync(ids);
             ArchipelagoClient.ServerData.CheckedLocations.UnionWith(ids);
+            try
+            {
+                ArchipelagoSession session = ArchipelagoClient.GetSession();
+                await session.Locations.CompleteLocationChecksAsync(ids);
+            }
+            catch (Exception e)
+            {
+                BepinLogger.LogError(e);
+            }
         }
 
         public static void CheckLocationsInScript(params long[] ids)

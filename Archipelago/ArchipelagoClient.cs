@@ -15,6 +15,7 @@ using GnosiaArchipelagoRandomizer.Patches.Optional;
 using Archipelago.MultiClient.Net.Models;
 using HarmonyLib.Tools;
 using gnosia;
+using coreSystem;
 
 namespace GnosiaArchipelagoRandomizer.Archipelago
 {
@@ -163,10 +164,11 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     Plugin.BepinLogger.LogError(e);
                 }
 
-                if (Plugin.Application != null)
+                if (Plugin.Application != null && Plugin.applicationInitialized == false)
                 {
                     //Start the title screen and stuff
                     Traverse.Create(Plugin.Application).Method("Start").GetValue();
+                    Plugin.applicationInitialized = true;
                     Plugin.BepinLogger.LogInfo("Game should start now");
                 }
 
@@ -213,6 +215,12 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         /// </summary>
         private void Disconnect()
         {
+            //Unsubscribe from invalid session facts
+            session.MessageLog.OnMessageReceived -= message => ArchipelagoConsole.LogMessage(message.ToString());
+            session.Items.ItemReceived -= OnItemReceived;
+            session.Socket.ErrorReceived -= OnSessionErrorReceived;
+            session.Socket.SocketClosed -= OnSessionSocketClosed;
+            //Base function from the template
             Plugin.BepinLogger.LogDebug("disconnecting from server...");
             session?.Socket.DisconnectAsync();
             session = null;
@@ -236,6 +244,9 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
 
             ServerData.Index++;
 
+            //Log for debugging
+            Plugin.BepinLogger.LogInfo($"Received {receivedItem.ItemDisplayName}");
+
             //Reward the item here
             long id = receivedItem.ItemId;
             Plugin.inventory.Add(id);
@@ -255,16 +266,11 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 //Try awarding the item immediately
                 try
                 {
+                    if (!Plugin.loadedSavesAtLeastOnce) //This is to not spam errors on first connection
+                        return;
                     gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
                     //We found gd so the player has loaded a save file.
-                    //But they might have disconnected and reconnected, so we need to check anyway
-                    List<long> unawardedItems = new List<long>(Plugin.inventory);
-                    foreach (long item in Plugin.items_used)
-                    {
-                        unawardedItems.Remove(item);
-                    }
-                    if (unawardedItems.Contains(id))
-                        Plugin.ActivateInstantUseItem(gd, id);
+                    Plugin.ActivateInstantUseItem(gd, id);
                 }
                 catch (Exception e)
                 {
@@ -272,6 +278,38 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     //Items will be automatically handled when they load a save file
                     Plugin.BepinLogger.LogError(e);
                 }
+            }
+            //Display a message (under certain conditions)
+            try
+            {
+                if (receivedItem.Player.Slot == session.ConnectionInfo.Slot) //The item is local
+                    return;
+                if (!receivedItem.Flags.HasFlag(ItemFlags.NeverExclude)) //The item is not useful
+                    return;
+                if (!Plugin.loadedSavesAtLeastOnce) //This is to prevent message spam on first connection
+                    return;
+                //Let's display this message
+                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
+                string playerName = receivedItem.Player.Name;
+                string itemName = receivedItem.ItemDisplayName;
+                string message = $"{playerName} sent you {itemName}";
+                int type = receivedItem.Flags.HasFlag(ItemFlags.Advancement) ? 0 : 1;
+                sp.ShowInfoUpdateMes(message, 45002U, type, true);
+                //If the item is a skill, show its dialog screen
+                if (id < 20)
+                {
+                    switch (id)
+                    {
+                        //TODO: Move messages from LocationPatches to here
+                        default:
+                            sp.SetDialogScreen(50400U, "You got a skill!\nAnd I forgot to replace this message!", 2, false);
+                            break;
+                    }                    
+                }
+            }
+            catch (Exception e)
+            {
+                Plugin.BepinLogger.LogError(e);
             }
         }
 
@@ -284,6 +322,18 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         {
             Plugin.BepinLogger.LogError(e);
             ArchipelagoConsole.LogMessage(message);
+            //Show error message
+            try
+            {
+                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
+                sp.SetDialogScreen(50400U, $"Error:\n{message}\nThe game will now disconnect from the server.\nYou can reconnect the same way you connected initially", 5, false);
+            }
+            catch (Exception ex)
+            {
+                Plugin.BepinLogger.LogError(ex);
+            }
+            //Disconnect
+            Disconnect();
         }
 
         /// <summary>
@@ -293,6 +343,16 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         private void OnSessionSocketClosed(string reason)
         {
             Plugin.BepinLogger.LogError($"Connection to Archipelago lost: {reason}");
+            //Show error message
+            try
+            {
+                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
+                sp.SetDialogScreen(50400U, $"Connection to Archipelago lost:\n{reason}.\nYou can reconnect the same way you connected initially", 5, false);
+            }
+            catch (Exception e)
+            {
+                Plugin.BepinLogger.LogError(e);
+            }
             Disconnect();
         }
 

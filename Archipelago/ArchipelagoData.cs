@@ -44,7 +44,8 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         /// <param name="roomSeed">seed name of this session</param>
         public void SetupSession(Dictionary<string, object> roomSlotData, string roomSeed)
         {
-            slotData = roomSlotData;
+            if (roomSlotData != null)
+                slotData = roomSlotData;
             seed = roomSeed;
         }
 

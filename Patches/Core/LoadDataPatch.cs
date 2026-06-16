@@ -16,7 +16,8 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 //Get an item and use it now!
                 long item = Plugin.instant_item_queue.Dequeue();
                 Plugin.ActivateInstantUseItem(__instance, item);
-            }    
+            }
+            Plugin.loadedSavesAtLeastOnce = true;
         }
     }
 }

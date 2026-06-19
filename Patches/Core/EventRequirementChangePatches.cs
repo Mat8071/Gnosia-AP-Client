@@ -11,7 +11,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
     [HarmonyPatch]
     class EventRequirementChangePatches
     {
-        static byte GetCharaTotalNotes(Array chara, gnosia.GameData gd, int id)
+        static byte GetCharaTotalNotes(Array chara, int id)
         {
             var entry = chara.GetValue(id);
             var nameField = AccessTools.Field(entry.GetType(), "d_tokkiNum");
@@ -23,6 +23,14 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         [HarmonyPatch(typeof(ScenarioContents), "CanOpen")]
         [MethodImpl(MethodImplOptions.NoInlining)]
         static bool BaseCanOpen(ScenarioContents instance, ref gnosia.GameData gd)
+        {
+            throw new NotImplementedException();
+        }
+
+        [HarmonyReversePatch]
+        [HarmonyPatch(typeof(ScenarioContents), "Close")]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void BaseClose(ScenarioContents instance, ref gnosia.GameData gd, ref gnosia.GameData.scenarioData sd)
         {
             throw new NotImplementedException();
         }
@@ -43,8 +51,9 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 int total_notes = 0;
                 for (int i = 1; i < 15; i++)
                 {
-                    total_notes += GetCharaTotalNotes(chara, gd, i);
-                    for (int j = 0; j < GetCharaTotalNotes(chara, gd, i); j++)
+                    byte notes = GetCharaTotalNotes(chara, i);
+                    total_notes += notes;
+                    for (int j = 0; j < notes; j++)
                     {
                         if ((gd.baseData.s_chara_all_flg[i] & (1UL << j)) > 0UL)
                         {
@@ -97,6 +106,32 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         {
             bool baseResult = BaseCanOpen(__instance, ref gd);
             __result = baseResult && gd.baseData.loop >= 16 && !ArchipelagoClient.ServerData.CheckedLocations.Contains(1508) && Plugin.found_characters[11];
+            return false;
+        }
+
+        [HarmonyPatch(typeof(SQ4Scenario), "Close")]
+        [HarmonyPrefix]
+        static bool SQ2GnosiaIntroClose(SQ4Scenario __instance, ref gnosia.GameData gd, ref gnosia.GameData.scenarioData sd)
+        {
+            gd.baseData.sce_flg = gd.baseData.sce_flg ^ 16384UL;
+            if (ArchipelagoClient.ServerData.CheckedLocations.Contains(202) && ArchipelagoClient.ServerData.CheckedLocations.Contains(703))
+            {
+                ScenarioContents.ChangeSceOnFlg(ref gd, ref sd, 24U);
+            }
+            BaseClose(__instance, ref gd, ref sd);
+            return false;
+        }
+
+        [HarmonyPatch(typeof(Stella4Scenario), "Close")]
+        [HarmonyPrefix]
+        static bool Stella5Close(Stella4Scenario __instance, ref gnosia.GameData gd, ref gnosia.GameData.scenarioData sd)
+        {
+            gd.baseData.sce_flg = gd.baseData.sce_flg ^ 16384UL;
+            if (ArchipelagoClient.ServerData.CheckedLocations.Contains(405)) //Changed condition
+            {
+                ScenarioContents.ChangeSceOnFlg(ref gd, ref sd, 24U);
+            }
+            BaseClose(__instance, ref gd, ref sd);
             return false;
         }
     }

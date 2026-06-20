@@ -140,9 +140,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.WaitSec(0.5f, true);
                 Plugin.CheckLocationsInScript(10);
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioCipiText(0, 25, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 gd.baseData.gainExp += 50U;
                 gd.forwardNext = true;
             };
@@ -705,9 +702,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(5);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioCommetText(3, 28, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 gd.forwardNext = true;
             };
             __instance.actions[5] = action;
@@ -1435,9 +1429,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.FadeBgmInScript(-1f, 0.4f, 0.75f, true, -1);
                 Plugin.CheckLocationsInScript(14);
                 gd.baseData.gainExp += 50U;
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioJonasText(2, 16, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
                 sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
                 sp.UnloadPlace();
@@ -2431,9 +2422,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(16);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioKukulText(5, 12, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 gd.forwardNext = true;
             };
             __instance.actions[1] = action;
@@ -2475,9 +2463,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(7);
                 gd.baseData.gainExp += 100U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioOtomeText(0, 41, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.WaitSec(0.4f, true);
                 gd.forwardNext = true;
             };
@@ -2852,9 +2837,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(2, 3, 4);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioRakioText(1, 18, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 gd.forwardNext = true;
             };
             __instance.actions[3] = action;
@@ -3097,9 +3079,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(9);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioRakioText(5, 26, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 gd.forwardNext = true;
             };
             __instance.actions[5] = action;
@@ -3646,9 +3625,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.FadeBgmInScript(0f, 0.4f, 2f, false, -1);
                 Plugin.CheckLocationsInScript(13);
                 gd.baseData.gainExp += 50U;
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioSetsuText(0, 22, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.HideInterface(50U, true);
                 sp.FadeBgmInScript(-1f, 0.8f, 1.5f, false, -1);
                 sp.WaitSec(0.4f, true);
@@ -4263,9 +4239,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(19);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioShaminText(0, 27, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.WaitSec(0.2f, true);
                 if (!ArchipelagoClient.ServerData.CheckedLocations.Contains(1304)) //Changed condition
                 {
@@ -4422,9 +4395,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(8);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioShaminText(2, 23, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.WaitSec(0.2f, true);
                 sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
                 sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
@@ -4646,9 +4616,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(11);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioShigeText(0, 18, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 gd.forwardNext = true;
             };
             __instance.actions[1] = action;
@@ -5217,9 +5184,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 if ((gd.baseData.sce_ind_flg[sd.id] & 256) == 0)
                 {
                     gd.baseData.gainExp += 50U;
-                    sp.PlaySeInScript("se_square", 1f);
-                    sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioSQText(0, 33, -1), 3, false);
-                    sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 }
                 sp.WaitSec(0.4f, true);
                 gd.forwardNext = true;
@@ -5413,9 +5377,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(15);
                 gd.baseData.gainExp += 50U;
                 sp.FadeBgmInScript(0f, 0.4f, 2f, false, -1);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioSQText(1, 24, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.WaitSec(0.4f, true);
                 sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
                 list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 25, 2), new char[] { '|' });
@@ -5914,9 +5875,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(6);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioStellaText(2, 19, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.WaitSec(0.4f, true);
                 gd.forwardNext = true;
             };
@@ -6128,9 +6086,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 Plugin.CheckLocationsInScript(12);
                 gd.baseData.gainExp += 50U;
                 sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioYurikoText(0, 12, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.WaitSec(0.2f, true);
                 gd.forwardNext = true;
             };
@@ -8542,9 +8497,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list6, true, true, false, false);
                 sp.WaitSec(0.05f, false);
                 Plugin.CheckLocationsInScript(1);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(15, 26, -1), 2, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.PlaySeInScript("se_square", 1f);
                 sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(15, 27, -1), (Setting.language == 1) ? 2 : 3, false);
                 sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));

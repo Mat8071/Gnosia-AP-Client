@@ -309,13 +309,66 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 //If the item is a skill, show its dialog screen
                 if (id < 20)
                 {
+                    sp.PlaySeInScript("se_square", 1f);
                     switch (id)
                     {
                         //TODO: Move messages from LocationPatches to here
+                        case 1:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(15, 26, -1), 2, false);
+                            break;
+                        case 2:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioRakioText(1, 18, -1), 3, false);
+                            break;
+                        case 5:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioCommetText(3, 28, -1), 3, false);
+                            break;
+                        case 6:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioStellaText(2, 19, -1), 3, false);
+                            break;
+                        case 7:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioOtomeText(0, 41, -1), 3, false);
+                            break;
+                        case 8:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioShaminText(2, 23, -1), 3, false);
+                            break;
+                        case 9:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioRakioText(5, 26, -1), 3, false);
+                            break;
+                        case 10:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioCipiText(0, 25, -1), 3, false);
+                            break;
+                        case 11:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioShigeText(0, 18, -1), 3, false);
+                            break;
+                        case 12:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioYurikoText(0, 12, -1), 3, false);
+                            break;
+                        case 13:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioSetsuText(0, 22, -1), 3, false);
+                            break;
+                        case 14:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioJonasText(2, 16, -1), 3, false);
+                            break;
+                        case 15:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioSQText(1, 24, -1), 3, false);
+                            break;
+                        case 16:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioKukulText(5, 12, -1), 3, false);
+                            break;
+                        case 17:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioSQText(0, 33, -1), 3, false);
+                            break;
+                        case 18:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioGinaText(1, 15, -1), 3, false);
+                            break;
+                        case 19:
+                            sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioShaminText(0, 27, -1), 3, false);
+                            break;
                         default:
                             sp.SetDialogScreen(50400U, "You got a skill!\nAnd I forgot to replace this message!", 2, false);
                             break;
-                    }                    
+                    }
+                    sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 }
             }
             catch (Exception e)

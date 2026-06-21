@@ -11,7 +11,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
     [HarmonyPatch]
     class EventRequirementChangePatches
     {
-        static byte GetCharaTotalNotes(Array chara, int id)
+        static public byte GetCharaTotalNotes(Array chara, int id)
         {
             var entry = chara.GetValue(id);
             var nameField = AccessTools.Field(entry.GetType(), "d_tokkiNum");

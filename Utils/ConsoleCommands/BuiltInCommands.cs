@@ -6,6 +6,8 @@ using GnosiaArchipelagoRandomizer.Archipelago;
 using gnosia;
 using UnityEngine;
 using setting;
+using GnosiaArchipelagoRandomizer.Patches.Core;
+using HarmonyLib;
 
 namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
 {
@@ -339,6 +341,112 @@ namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
                     {
                         text += $"{Setting.AbilNames[(int)abil]}: {(float)Mathf.RoundToInt(gd.GetAbil(gd.personFromId[Characters[character]], abil, false) * 100) / 2f}\n";
                     }
+
+                    return CommandResult.Ok(text);
+                }
+            });
+            CommandRegistry.Register(new ConsoleCommand
+            {
+                Keyword = "rename",
+                Description = "renames one of the characters of the game (this save file only)",
+                Usage = "/rename <Character> <New Name>",
+                MinArgs = 2,
+                MaxArgs = 2,
+
+                Execute = args =>
+                {
+                    var character = args[0].ToLower();
+                    var newName = args[1];
+
+                    if (!Characters.ContainsKey(character))
+                    {
+                        return CommandResult.Error($"Unknown Character '{character}'.");
+                    }
+
+                    gnosia.GameData gd = null;
+
+                    try
+                    {
+                        gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
+                    }
+                    catch
+                    {
+                        return CommandResult.Error("You must load a save file (and be in the Setup screen) to use this command");
+                    }
+
+                    if (gd.baseData.state != 0)
+                    {
+                        return CommandResult.Error("You must be in the Setup screen to use this command.");
+                    }
+
+                    //Get internal stuff
+                    Type dataType = AccessTools.TypeByName("gnosia.Data");
+                    Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
+
+                    object entry = chara.GetValue(Characters[character]);
+                    AccessTools.Field(entry.GetType(), "name").SetValue(entry, newName);
+                    chara.SetValue(entry, Characters[character]);
+
+                    return CommandResult.Ok("Command executed successfully.");
+                }
+            });
+            CommandRegistry.Register(new ConsoleCommand
+            {
+                Keyword = "goal_info",
+                Description = "Lists all goal-related information.",
+                Usage = "/goal_info",
+                MinArgs = 0,
+                MaxArgs = 0,
+
+                Execute = args =>
+                {
+                    //Get slot data and goal option
+                    Dictionary<string, object> slotData = ArchipelagoClient.ServerData.GetSlotData();
+
+                    if (!slotData.ContainsKey("goal"))
+                    {
+                        return CommandResult.Error("The 'Goal' yaml option wasn't found in SlotData");
+                    }
+
+                    if (!slotData.ContainsKey("required_note_percent"))
+                    {
+                        return CommandResult.Error("The 'Required Note Percent' yaml option wasn't found in SlotData");
+                    }
+
+                    int goal = Convert.ToInt32(slotData["goal"]);
+                    float requiredNotePercent = Convert.ToSingle(slotData["required_note_percent"]);
+
+                    string goalString = "";
+                    switch (goal)
+                    {
+                        case 0:
+                            goalString = "Normal Ending";
+                            break;
+                        default:
+                            return CommandResult.Error("Error while parsing the goal found in SlotData");
+                    }
+
+                    //Get internal stuff
+                    Type dataType = AccessTools.TypeByName("gnosia.Data");
+                    Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
+
+                    //Actually list goal info
+                    int foundNotes = 0;
+                    foreach (bool found in Plugin.found_notes)
+                    {
+                        if (found)
+                            foundNotes++;
+                    }
+                    int totalNotes = 0;
+                    for (int i = 1; i < 15; i++)
+                    {
+                        byte notes = EventRequirementChangePatches.GetCharaTotalNotes(chara, i);
+                        totalNotes += notes;
+                    }
+                    int requiredNotes = (int)(totalNotes * (requiredNotePercent / 100f));
+
+                    string text = $"Goal: {goalString}\n" +
+                                  $"Found Notes: {foundNotes}/{requiredNotes}/{totalNotes} (found/required/total)\n";
 
                     return CommandResult.Ok(text);
                 }

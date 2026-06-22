@@ -31,7 +31,7 @@ namespace GnosiaArchipelagoRandomizer
     {
         public const string PluginGUID = "com.mat8071.gnosiaAP";
         public const string PluginName = "GnosiaArchipelagoRandomizer";
-        public const string PluginVersion = "0.1.3";
+        public const string PluginVersion = "0.1.4";
 
         public const string ModDisplayInfo = $"{PluginName} v{PluginVersion}";
         private const string APDisplayInfo = $"Archipelago v{ArchipelagoClient.APVersion}";

@@ -91,6 +91,25 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             return false;
         }
 
+        [HarmonyPatch(typeof(Kukul3Scenario), "CanOpen")]
+        [HarmonyPrefix]
+        static bool KukrushkaTheGuard(Kukul3Scenario __instance, ref bool __result, ref gnosia.GameData gd)
+        {
+            bool baseResult = BaseCanOpen(__instance, ref gd);
+            int[] neededCharacters = [11, 3, 7, 12, 14];
+            bool hasNeededCharacters = true;
+            foreach (int id in neededCharacters)
+            {
+                if (!Plugin.found_characters[id])
+                {
+                    hasNeededCharacters = false;
+                    break;
+                }
+            }
+            __result = baseResult && hasNeededCharacters && gd.baseData.totalNum >= 9 && gd.baseData.yakuNum[4] == 2 && gd.charaYakuList[0] != Setting.Yakuwari.y_Lover && ((gd.baseData.s_chara_all_flg[14] & 4UL) > 0UL || (gd.baseData.s_chara_all_flg[2] & 2UL) > 0UL) && (gd.baseData.s_chara_all_flg[11] & 2UL) > 0UL;
+            return false;
+        }
+
         [HarmonyPatch(typeof(SQ4Scenario), "CanOpen")]
         [HarmonyPrefix]
         static bool SQ2GnosiaIntro(SQ4Scenario __instance, ref bool __result, ref gnosia.GameData gd)

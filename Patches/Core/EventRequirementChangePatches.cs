@@ -5,6 +5,7 @@ using HarmonyLib;
 using gnosia;
 using util;
 using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {
@@ -98,12 +99,16 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             bool baseResult = BaseCanOpen(__instance, ref gd);
             int[] neededCharacters = [11, 3, 7, 12, 14];
             bool hasNeededCharacters = true;
-            foreach (int id in neededCharacters)
+            Dictionary<string, object> slotData = ArchipelagoClient.ServerData.GetSlotData();
+            if (Convert.ToBoolean(slotData["randomize_character_unlocks"]))
             {
-                if (!Plugin.found_characters[id])
+                foreach (int id in neededCharacters)
                 {
-                    hasNeededCharacters = false;
-                    break;
+                    if (!Plugin.found_characters[id])
+                    {
+                        hasNeededCharacters = false;
+                        break;
+                    }
                 }
             }
             __result = baseResult && hasNeededCharacters && gd.baseData.totalNum >= 9 && gd.baseData.yakuNum[4] == 2 && gd.charaYakuList[0] != Setting.Yakuwari.y_Lover && ((gd.baseData.s_chara_all_flg[14] & 4UL) > 0UL || (gd.baseData.s_chara_all_flg[2] & 2UL) > 0UL) && (gd.baseData.s_chara_all_flg[11] & 2UL) > 0UL;

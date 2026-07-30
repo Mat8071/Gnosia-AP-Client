@@ -3958,7 +3958,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                     sp.WaitSec(0.01f, false);
                     int mainP = ad.mainP;
                     Plugin.CheckLocationsInScript(1104);
-                    sp.ShowInfoUpdateMes(sp.m_rs.GetScenarioSetsuText(7, 16, -1), 45002U, 0, true);
                     gd.baseData.gainExp += 50U;
                     gd.forwardNext = true;
                 }
@@ -5518,6 +5517,142 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 gd.forwardNext = true;
             };
             __instance.actions[28] = action;
+            action = __instance.actions[29];
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            {
+                //Get gd and sp
+                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
+                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
+                //Base
+                List<string> list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 116, 0), new char[] { '|' });
+                sp.SetNormalSerifu(0, ad.targetP, 1, list24, true, false, true, true);
+                sp.FadeBgmInScript(-1f, 0.4f, 0.8f, false, -1);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 117, 4), new char[] { '|' });
+                string text20 = list24[0];
+                Util.Replace(ref text20, "{0}", gd.takashiName);
+                list24[0] = text20;
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, false, false, true);
+                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.4f, 0, true, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 118, 0), new char[] { '|' });
+                sp.SetNormalSerifu(0, ad.targetP, 1, list24, true, true, true, true);
+                sp.WaitSec(0.2f, true);
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
+                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
+                    sp.SetColorScreen(255U, 30U, -1);
+                    return true;
+                }, (float e) => true, true));
+                sp.ShowChara(ad.targetP, 6, 1, 20U, false);
+                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(240f, 80f, 480f, 270f), 0f, 1f, true, null, true);
+                sp.SetFadeScreen(new List<uint> { 30U }, 31U, 0.7f, 0, true, true, true);
+                sp.FadeBgmInScript(-1f, 0.85f, 1f, false, -1);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 119, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 120, 2), new char[] { '|' });
+                text20 = list24[0];
+                Util.Replace(ref text20, "{0}", gd.takashiName);
+                list24[0] = text20;
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 121, 0), new char[] { '|' });
+                sp.SetNormalSerifu(0, ad.targetP, 1, list24, true, false, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 122, 4), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, false, false, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 123, 0), new char[] { '|' });
+                sp.SetNormalSerifu(0, ad.targetP, 1, list24, true, false, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 124, 5), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, false, false, true);
+                sp.WaitSec(0.4f, true);
+                sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 125, 4), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 126, 2), new char[] { '|' });
+                text20 = list24[0];
+                Util.Replace(ref text20, "{0}", gd.takashiName);
+                list24[0] = text20;
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, false, true, false, true);
+                sp.PlayBgmInScript("bgm21", 2f, 0.75f, -1, true);
+                sp.WaitText(50U, "test", true);
+                sp.HideInterface(50U, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 127, 0), new char[] { '|' });
+                text20 = list24[0];
+                Util.Replace(ref text20, "{0}", gd.takashiName);
+                list24[0] = text20;
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 128, 3), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.6f, 0, true, true, true);
+                sp.FadeBgmInScript(-1f, 0.6f, 1f, false, -1);
+                sp.WaitSec(0.4f, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 129, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, -1, 1, list24, true, true, true, false);
+                sp.WaitSec(0.2f, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 130, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, -1, 1, list24, true, true, true, false);
+                sp.WaitSec(0.4f, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 131, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, -1, 1, list24, true, true, true, false);
+                sp.WaitSec(0.5f, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 132, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, -1, 1, list24, true, true, true, false);
+                sp.WaitSec(0.4f, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 133, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, -1, 1, list24, true, true, true, false);
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
+                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
+                    sp.SetColorScreen(255U, 30U, -1);
+                    return true;
+                }, (float e) => true, true));
+                sp.ShowChara(ad.targetP, 0, 1, 20U, false);
+                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(240f, 80f, 480f, 270f), 0f, 1f, true, null, true);
+                sp.FadeBgmInScript(-1f, 0.8f, 1f, false, -1);
+                sp.SetFadeScreen(new List<uint> { 30U }, 31U, 0.7f, 0, true, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 134, 0), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 135, 2), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 136, 3), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                sp.FadeBgmInScript(-1f, 0f, 2f, true, -1);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 137, 6), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                sp.WaitSec(0.05f, false);
+                int targetP = ad.targetP;
+                Plugin.CheckLocationsInScript(205);
+                gd.baseData.gainExp += 50U;
+                sp.WaitSec(0.8f, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 139, 0), new char[] { '|' });
+                text20 = list24[0];
+                Util.Replace(ref text20, "{0}", gd.takashiName);
+                list24[0] = text20;
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, false, true, false, true);
+                sp.PlayBgmInScript("bgm14", 1.2f, 0.75f, -1, true);
+                sp.WaitText(50U, "test", true);
+                sp.HideInterface(50U, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 140, 2), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, true, true, false, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 141, 3), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, false, true, false, true);
+                sp.LoadTexture("ivep02_03_0");
+                sp.WaitLoad();
+                sp.WaitText(50U, "test", true);
+                sp.HideInterface(50U, true);
+                sp.LoadTexture("ivep02_03_1");
+                sp.WaitLoad();
+                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
+                sp.UnvisibleAllChara(20U, -1);
+                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                {
+                    sp.SetCharaSingleTexture(10000, "ivep02_03_1", 1U, 33f, 20U);
+                    return true;
+                }, (float e) => true, false));
+                sp.WaitFade(new List<uint> { 30U }, true, true);
+                list24 = Util.Split(sp.m_rs.GetScenarioSQText(2, 142, 0), new char[] { '|' });
+                sp.SetNormalSerifu(ad.targetP, 0, 1, list24, false, true, true, true);
+            };
+            __instance.actions[29] = action;
         }
 
 

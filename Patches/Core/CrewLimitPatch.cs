@@ -22,10 +22,15 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             {
                 //Limit people variable to crew max
                 Traverse base_people = Traverse.Create(__instance).Field("people");
+                Traverse base_gnosia = Traverse.Create(__instance).Field("yakuNum");
                 int people = base_people.GetValue<int>();
+                int[] yakuNum = base_gnosia.GetValue<int[]>();
                 if (people > Plugin.crew_max)
                     people = Plugin.crew_max;
+                while (yakuNum[7] * 2 + 2 >= people)
+                    yakuNum[7]--;
                 base_people.SetValue(people);
+                base_gnosia.SetValue(yakuNum);
             }
         }
     }

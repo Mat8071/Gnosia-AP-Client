@@ -1,0 +1,119 @@
+ID:  16 -> Loop 1
+ID:  17 -> Loop 2
+ID:  18 -> Loop 3
+ID:  19 -> Loop 4
+ID:  20 -> Loop 5
+ID:  21 -> Loop 6
+ID:  22 -> Loop 7
+ID:  23 -> Loop 8
+ID:  24 -> Loop 9
+ID:  25 -> Loop 10
+ID:  26 -> Loop 11
+ID:  27 -> Loop 12
+ID:  28 -> Loop 13
+ID:  29 -> Bug Loop
+ID:  30 -> Bug Tutorial
+ID:  32 -> Raqio Gnosia Result Event
+ID:  33 -> Raqio Note 2 Event
+ID:  34 -> Shigemichi Gnosia Result Event
+ID:  35 -> Shigemichi Crew Result Event
+ID:  36 -> Chipie Note 2 - Result Event Ver.
+ID:  37 -> Chipie Crew Result Event
+ID:  38 -> Remnan Gnosia Result Event
+ID:  39 -> Remnan & Raqio Crew Result Event
+ID:  40 -> Comet Gnosia Result Event
+ID:  41 -> Comet Note 2 Event
+ID:  42 -> Yuriko Gnosia Result Event
+ID:  43 -> Yuriko Crew Result Event
+ID:  44 -> Jonas & SQ Gnosia Result Event
+ID:  45 -> Jonas Note 2 - Result Event Ver.
+ID:  46 -> Setsu Gnosia Result Event
+ID:  47 -> Setsu Crew Result Event
+ID:  48 -> Otome Gnosia Result Event
+ID:  49 -> Otome Note 2 Event
+ID:  50 -> Sha-Ming Gnosia Result Event
+ID:  52 -> Gina Gnosia Result Event
+ID:  53 -> Gina Note 2 Event
+ID:  54 -> SQ Note 2 - Result Event Ver.
+ID:  55 -> Stella Protected By Player Result Event
+ID:  56 -> Step Forward Event
+ID:  57 -> A Prayer To The Stars
+ID:  58 -> Kukrushka's Song
+ID:  59 -> Lovely Kukrushka
+ID:  60 -> Let's Collaborate Event
+ID:  61 -> Chipie & Comet Note Event
+ID:  62 -> Chipie Note 5 Event
+ID:  63 -> Chipie & Shigemichi Note Event
+ID:  64 -> Shower Room - Raqio
+ID:  65 -> Raqio Quiz - Definite Human/Enemy
+ID:  66 -> Raqio Quiz - Guardian Angel
+ID:  67 -> Raqio Quiz - Note 4
+ID:  68 -> Raqio Quiz - Note 5
+ID:  69 -> Raqio Quiz - Freeze All
+ID:  70 -> Ace In The Hole
+ID:  71 -> Otome & Sha-Ming Note Event
+ID:  72 -> Small Talk Event
+ID:  73 -> Sha-Ming Gnosia Ally Intro
+ID:  74 -> Sha-Ming's Promise
+ID:  75 -> Comet Note 4 Event
+ID:  76 -> Shower Room - Comet
+ID:  77 -> Say You're Human Event
+ID:  78 -> Citizen Slime
+ID:  79 -> Adventure In A Frozen World
+ID:  80 -> Gina Note 3 Event
+ID:  81 -> Don't Be Fooled Event
+ID:  82 -> Shower Room - Gina
+ID:  83 -> Allacosia
+ID:  84 -> Gina In Love
+ID:  85 -> Chaos
+ID:  86 -> Starship Oracle
+ID:  87 -> Confrontation
+ID:  88 -> The Alien Gnos
+ID:  89 -> World Without Gnosia Hint Result Event
+ID:  90 -> Inescapable Past
+ID:  91 -> Remnan Note 2 Event
+ID:  92 -> Hope For The Future
+ID:  93 -> Seek Agreement Event
+ID:  94 -> Shower Room - Shigemichi
+ID:  95 -> Shigemichi Note 4 Event
+ID:  96 -> Game Sermon
+ID:  97 -> Shigemichi Note 6 Event
+ID:  98 -> Don't Vote Event
+ID:  99 -> Otome's Resolution
+ID: 100 -> Exaggerate Event
+ID: 101 -> Retaliate Event
+ID: 102 -> Setsu Note 2 Event
+ID: 103 -> Loop After - The Alien Gnos
+ID: 104 -> Loop After - Raqio Note 6 Event
+ID: 105 -> Loop After - The Final Problem
+ID: 106 -> After The Final Problem Result Event
+ID: 107 -> Kukrushka & Otome Note Event
+ID: 108 -> The Kukrushka Problem
+ID: 109 -> Kukrushka The Guard
+ID: 110 -> Jonas Note 3 Event
+ID: 111 -> Jonas The Wreck
+ID: 112 -> Obfuscate Event
+ID: 113 -> Jonas & Kukrushka Note Event
+ID: 114 -> Return Of The Saint
+ID: 115 -> To The Hangar
+ID: 116 -> Shigemichi In Love
+ID: 117 -> Tears Go By
+ID: 118 -> Raqio Note 6 Event
+ID: 119 -> The Final Problem
+ID: 120 -> A World Without Gnosia - Unfilled Key Ver.
+ID: 121 -> Fool And Be Fooled
+ID: 122 -> Flowers
+ID: 123 -> Plastic Flower
+ID: 124 -> Stella Note 5 Event
+ID: 125 -> Tears Of SQ
+ID: 126 -> Let's Play
+ID: 127 -> Setsu's Origins
+ID: 128 -> A World Without Gnosia - First Time Ver.
+ID: 129 -> In The Loop
+ID: 130 -> In The Loop Again
+ID: 131 -> Setsu Note 3 Event
+ID: 133 -> SQ Note 2 - Gnosia Intro Ver.
+ID: 134 -> Regret Event
+ID: 136 -> Respec & Recollection Event
+ID: 137 -> Gina Note 6 Event
+ID: 138 -> A World Without Gnosia - Normal Ending Ver.

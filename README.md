@@ -59,7 +59,7 @@ Here's what you need to do to goal with the currently implemented goals:
 #### Normal Ending
 To get the Normal Ending, you need to start a loop with zero Gnosia (and obviously have the right amount of notes defined by your yaml options).
 
-To be able to set gnosia to zero, you need to unlock the ability to do so like in vanilla, by completing "The Final Problem" Event and subsequently winning a loop with Setsu. If you are in go mode, you can use /get_logical_path The Final Problem to know exactly which events you need to complete and in which order, in case you haven't done that yet.
+To be able to set gnosia to zero, you need to unlock the ability to do so like in vanilla, by completing "The Final Problem" Event and subsequently winning a loop with Setsu. If you are in go mode, you can use `/get_logical_path The Final Problem` to know exactly which events you need to complete and in which order, in case you haven't done that yet.
 ### An event is in logic but it hasn't happened for many loops
 This is not necessarily a logic error. It may be that the event requires specific character/role combinations or that the characters needed were involved in too many events recently.
 Before you report this as a logic bug, try doing the following:

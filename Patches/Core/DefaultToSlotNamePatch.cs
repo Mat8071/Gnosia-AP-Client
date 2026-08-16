@@ -1,6 +1,6 @@
-﻿using GnosiaArchipelagoRandomizer.Archipelago;
+﻿using application;
+using GnosiaArchipelagoRandomizer.Archipelago;
 using HarmonyLib;
-using application;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using application;
 using coreSystem;
+using GnosiaArchipelagoRandomizer.Archipelago;
 using HarmonyLib;
 using resource;
 using sce.SampleUtil.Input;
@@ -14,7 +15,7 @@ using util;
 namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
     [HarmonyPatch]
-    class ReCharacterCreationPatch
+    class SkipTutorialPatch
     {
         [HarmonyReversePatch]
         [HarmonyPatch(typeof(application.Screen), "MyUpdate")]
@@ -23,138 +24,14 @@ namespace GnosiaArchipelagoRandomizer.Patches.Optional
             throw new NotImplementedException();
         }
 
-        [HarmonyPatch(typeof(TakashiSetScreen), "InitializeGlm")]
-        [HarmonyPostfix]
-        static void SetCorrectValues(TakashiSetScreen __instance)
-        {
-            Traverse t = Traverse.Create(__instance);
-            gnosia.GameData mydata = t.Field("mydata").GetValue<gnosia.GameData>();
-            if (mydata.baseData.loop > 0)
-            {
-                //Replace default values with ones from current playthrough
-                t.Field("abilLeft").SetValue(0);
-                __instance.SetText("abilleft", t.Field("abilLeft").GetValue<int>().ToString(), false, true);
-                t.Method("InputFieldEndEdit", mydata.takashiName).GetValue();
-                //Reset Sex/Color modifiers
-                switch (mydata.baseData.takashiColor)
-                {
-                    case 0:
-                        mydata.baseData.s_loveList[0].data[2] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[3] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[8] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[4] += 2457U;
-                        mydata.baseData.s_loveList[0].data[7] += 2457U;
-                        break;
-                    case 1:
-                        mydata.baseData.s_loveList[0].data[5] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[6] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[10] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[13] += 2457U;
-                        mydata.baseData.s_loveList[0].data[1] += 2457U;
-                        mydata.baseData.s_loveList[0].data[12] += 2457U;
-                        mydata.baseData.s_loveList[0].data[7] += 2457U;
-                        break;
-                    case 2:
-                        mydata.baseData.s_loveList[0].data[2] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[3] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[8] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[11] += 2457U;
-                        mydata.baseData.s_loveList[0].data[13] += 2457U;
-                        mydata.baseData.s_loveList[0].data[12] += 2457U;
-                        break;
-                    case 3:
-                        mydata.baseData.s_loveList[0].data[5] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[6] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[10] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[1] += 2457U;
-                        break;
-                    case 4:
-                        mydata.baseData.s_loveList[0].data[1] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[4] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[13] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[2] += 2457U;
-                        mydata.baseData.s_loveList[0].data[10] += 2457U;
-                        break;
-                    case 5:
-                        mydata.baseData.s_loveList[0].data[11] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[12] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[7] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[10] += 2457U;
-                        mydata.baseData.s_loveList[0].data[8] += 2457U;
-                        break;
-                    case 6:
-                        mydata.baseData.s_loveList[0].data[2] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[3] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[8] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[1] += 2457U;
-                        break;
-                    case 7:
-                        mydata.baseData.s_loveList[0].data[1] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[4] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[13] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[5] += 2457U;
-                        mydata.baseData.s_loveList[0].data[6] += 2457U;
-                        mydata.baseData.s_loveList[0].data[7] += 2457U;
-                        break;
-                    case 8:
-                        mydata.baseData.s_loveList[0].data[11] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[12] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[7] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[1] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[2] += 2457U;
-                        mydata.baseData.s_loveList[0].data[6] += 2457U;
-                        mydata.baseData.s_loveList[0].data[8] += 2457U;
-                        break;
-                    case 9:
-                        mydata.baseData.s_loveList[0].data[5] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[6] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[10] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[11] += 2457U;
-                        mydata.baseData.s_loveList[0].data[7] += 2457U;
-                        mydata.baseData.s_loveList[0].data[4] += 2457U;
-                        break;
-                    case 10:
-                        mydata.baseData.s_loveList[0].data[1] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[4] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[13] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[6] += 2457U;
-                        mydata.baseData.s_loveList[0].data[8] += 2457U;
-                        break;
-                    case 11:
-                        mydata.baseData.s_loveList[0].data[11] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[12] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[7] -= 3276U;
-                        mydata.baseData.s_loveList[0].data[1] += 2457U;
-                        mydata.baseData.s_loveList[0].data[6] += 2457U;
-                        mydata.baseData.s_loveList[0].data[2] += 2457U;
-                        mydata.baseData.s_loveList[0].data[10] += 2457U;
-                        break;
-                }
-                if (mydata.baseData.takashiSex == 0)
-                {
-                    mydata.baseData.s_loveList[0].data[4] -= 6553U;
-                }
-                else if (mydata.baseData.takashiSex == 1)
-                {
-                    mydata.baseData.s_loveList[0].data[13] -= 6553U;
-                }
-                else
-                {
-                    mydata.baseData.s_loveList[0].data[3] -= 6553U;
-                    mydata.baseData.s_loveList[0].data[13] -= 3276U;
-                }
-            }
-        }
-
         [HarmonyPatch(typeof(TakashiSetScreen), "MyUpdate")]
-        [HarmonyPriority(Priority.First)]
         [HarmonyPrefix]
-        static bool StopIntroCutscene(TakashiSetScreen __instance, ref int __result, float ellapseSec, ControllerContext controllerContext, bool covered = false)
+        static bool Prefix(TakashiSetScreen __instance, ref int __result, float ellapseSec, ControllerContext controllerContext, bool covered = false)
         {
             Traverse t = Traverse.Create(__instance);
             gnosia.GameData mydata = t.Field("mydata").GetValue<gnosia.GameData>();
             ScriptParser sp = t.Field("m_scriptParser").GetValue<ScriptParser>();
-            if (mydata.baseData.loop == 0)
+            if (mydata.baseData.loop > 0)
             {
                 return true;
             }
@@ -649,21 +526,60 @@ namespace GnosiaArchipelagoRandomizer.Patches.Optional
                                     mydata.baseData.s_loveList[0].data[3] += 6553U;
                                     mydata.baseData.s_loveList[0].data[13] += 3276U;
                                 }
+                                //Set variables to their correct loop 14 state
+                                var options = ArchipelagoClient.ServerData.SlotData.Options;
+                                HashSet<int> tutorialBits = new HashSet<int> { 9, 12, 20, };
+                                if ((options?.TutorialHandling ?? ArchipelagoData.TutorialHandling.Skip) != ArchipelagoData.TutorialHandling.SkipAndRemoveLocations)
+                                {
+                                    //Check all "Meet Character" locations
+                                    _ = Plugin.CheckLocations(100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400);
+                                    if (options?.RandomizeNotes ?? true)
+                                    {
+                                        //Check all Note 1s
+                                        _ = Plugin.CheckLocations(101, 201, 301, 401, 501, 601, 701, 801, 901, 1001, 1101, 1201, 1301, 1401);
+                                    }
+                                    if (options?.RandomizeRoleUnlocks ?? true)
+                                    {
+                                        //Check all role explanations and bug
+                                        _ = Plugin.CheckLocations(1501, 1502, 1503, 1504, 1505, 1506, 1507, 1508);
+                                    }
+                                }
+                                if (!(options?.RandomizeNotes ?? true))
+                                {
+                                    for (int id = 1; id < mydata.baseData.s_chara_all_flg.Length; id++)
+                                    {
+                                        mydata.baseData.s_chara_all_flg[id] |= 1UL;
+                                    }
+                                }
+                                if (!(options?.RandomizeRoleUnlocks ?? true))
+                                {
+                                    for (int id = 1; id <= 8; id++)
+                                    {
+                                        mydata.baseData.sce_all_flg |= (1UL << id);
+                                    }
+                                    tutorialBits.Add(23); //Flag for seeing bug tutorial
+                                }
+                                foreach (int bit in tutorialBits)
+                                {
+                                    mydata.baseData.sce_all_flg |= (1UL << bit);
+                                }
+                                mydata.baseData.loop = 14;
                                 sp.WaitSec(0.01f, false);
-                                //Do not start intro animation and stuff
+                                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
+                                {
+                                    sp.SetColorScreen(255U, 50000U, -1);
+                                    sp.m_sb[50000U].SetFadeIn(0.5f, 0);
+                                    return true;
+                                }, (float e) => true, false));
                                 sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
                                 {
                                     ScriptParser scriptParser = sp;
-                                    //Instead, go back to Yuriko6Scenario
-                                    mydata.forwardNext = true;
-                                    mydata.forward = true;
-                                    scriptParser.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 50002U, 0.25f, 0, false, true, true);
-                                    scriptParser.LoadTexture("charaIndexG_0_" + mydata.baseData.takashiColor.ToString());
-                                    scriptParser.WaitLoad();
-                                    scriptParser.LoadTexture("charaIndex_0_" + mydata.baseData.takashiColor.ToString());
-                                    scriptParser.WaitLoad();
+                                    scriptParser.RemoveScreen(500U);
+                                    scriptParser.RemoveScreen(0U);
                                     scriptParser.UnloadTexture("entry");
-                                    scriptParser.WaitFade(new List<uint> { 50002U }, true, true);
+                                    m_resourceManager.UnloadMenuSceneData();
+                                    scriptParser.SetScreen(Setting.Screen.s_FirstLoad, 50001U, true, false, -1);
+                                    scriptParser.m_sb[50001U].SetFadeIn(0.5f, 0);
                                     return true;
                                 }, (float e) => true, true));
                             }

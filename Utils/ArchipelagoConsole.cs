@@ -2,10 +2,9 @@
 using System.Linq;
 using BepInEx;
 using GnosiaArchipelagoRandomizer.Archipelago;
-using UnityEngine;
-using Rewired;
-using UnityEngine.UIElements.UIR;
 using GnosiaArchipelagoRandomizer.Utils.ConsoleCommands;
+using Rewired;
+using UnityEngine;
 
 namespace GnosiaArchipelagoRandomizer.Utils
 {

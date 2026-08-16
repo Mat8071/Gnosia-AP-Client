@@ -1,8 +1,8 @@
-﻿using GnosiaArchipelagoRandomizer.Archipelago;
+﻿using System.IO;
+using GnosiaArchipelagoRandomizer.Archipelago;
 using HarmonyLib;
-using systemService.saveData;
-using System.IO;
 using LitJson;
+using systemService.saveData;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {
@@ -14,7 +14,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.isSaving = false;
             //Change start
             string seed = ArchipelagoClient.ServerData.GetSeed();
-            string relativeSavePath = "/Archipelago/" + seed;
+            string slotName = ArchipelagoClient.ServerData.SlotName;
+            foreach (char c in Path.GetInvalidFileNameChars())
+            {
+                slotName = slotName.Replace(c, '_');
+            }
+            string relativeSavePath = $"/Archipelago/{seed}/{slotName}";
             string savePath = UnityEngine.Application.persistentDataPath + relativeSavePath;
             if (!Directory.Exists(savePath))
             {

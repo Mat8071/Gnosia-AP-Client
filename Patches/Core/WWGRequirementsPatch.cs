@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text;
+using System.Reflection;
 using coreSystem;
 using HarmonyLib;
 using sce.SampleUtil.Input;
-using System.Reflection;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {

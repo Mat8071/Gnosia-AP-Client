@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using application;
 using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
+using baseEffect.graphics;
 using BepInEx;
 using coreSystem;
 using gnosia;
-using setting;
-using HarmonyLib;
-using UnityEngine;
 using GnosiaArchipelagoRandomizer.Patches.DeathLink;
-using application;
-using UnityEngine.UI;
-using baseEffect.graphics;
 using GnosiaArchipelagoRandomizer.Utils;
+using HarmonyLib;
+using setting;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace GnosiaArchipelagoRandomizer.Archipelago
 {

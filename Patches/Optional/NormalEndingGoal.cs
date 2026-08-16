@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using coreSystem;
 using gnosia;
 using HarmonyLib;
+using setting;
 using UnityEngine;
 using util;
-using setting;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
@@ -16,7 +14,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Optional
         static void Postfix(MainWithoutGlastScenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();

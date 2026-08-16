@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using HarmonyLib;
 using System.Reflection;
 using baseEffect.graphics;
+using HarmonyLib;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {

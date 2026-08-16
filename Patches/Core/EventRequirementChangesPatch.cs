@@ -1,25 +1,17 @@
 ﻿using System;
-using setting;
-using GnosiaArchipelagoRandomizer.Archipelago;
-using HarmonyLib;
-using gnosia;
-using util;
 using System.Runtime.CompilerServices;
-using System.Collections.Generic;
+using gnosia;
+using GnosiaArchipelagoRandomizer.Archipelago;
+using GnosiaArchipelagoRandomizer.Utils;
+using HarmonyLib;
+using setting;
+using util;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {
     [HarmonyPatch]
-    class EventRequirementChangePatches
+    class EventRequirementChangesPatch
     {
-        static public byte GetCharaTotalNotes(Array chara, int id)
-        {
-            var entry = chara.GetValue(id);
-            var nameField = AccessTools.Field(entry.GetType(), "d_tokkiNum");
-            return (byte)nameField.GetValue(entry);
-        }
-
-
         [HarmonyReversePatch]
         [HarmonyPatch(typeof(ScenarioContents), "CanOpen")]
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -52,7 +44,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 int total_notes = 0;
                 for (int i = 1; i < 15; i++)
                 {
-                    byte notes = GetCharaTotalNotes(chara, i);
+                    byte notes = MyUtils.GetCharaTotalNotes(chara, i);
                     total_notes += notes;
                     for (int j = 0; j < notes; j++)
                     {
@@ -62,7 +54,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                         }
                     }
                 }
-                __result = found_notes >= (total_notes * (Convert.ToSingle(ArchipelagoClient.ServerData.GetSlotData()["required_note_percent"]) / 100f));
+                __result = found_notes >= (total_notes * ((float)(ArchipelagoClient.ServerData.SlotData.Options?.RequiredNotePercent ?? 80) / 100f));
                 return false;
             }
             __result = false;
@@ -74,6 +66,11 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         [HarmonyPrefix]
         static bool DontBeFooled(Gina2Scenario __instance, ref bool __result, ref gnosia.GameData gd)
         {
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if (!(options?.RandomizeNotes ?? true))
+            {
+                return true; //Run original
+            }
             //Call base method
             bool baseResult = BaseCanOpen(__instance, ref gd);
             //Original (Modified)
@@ -99,8 +96,8 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             bool baseResult = BaseCanOpen(__instance, ref gd);
             int[] neededCharacters = [11, 3, 7, 12, 14];
             bool hasNeededCharacters = true;
-            Dictionary<string, object> slotData = ArchipelagoClient.ServerData.GetSlotData();
-            if (Convert.ToBoolean(slotData["randomize_character_unlocks"]))
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if (options?.RandomizeCharacterUnlocks ?? false)
             {
                 foreach (int id in neededCharacters)
                 {
@@ -119,6 +116,11 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         [HarmonyPrefix]
         static bool SQ2GnosiaIntro(SQ4Scenario __instance, ref bool __result, ref gnosia.GameData gd)
         {
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if (!(options?.RandomizeNotes ?? true))
+            {
+                return true; //Run original
+            }
             bool baseResult = BaseCanOpen(__instance, ref gd);
             __result = baseResult && gd.baseData.day == 1 && gd.baseData.loop >= 25 && gd.personFromId[2] >= 0 && gd.personFromId[7] >= 0 && gd.personFromId[3] >= 0 && !ArchipelagoClient.ServerData.CheckedLocations.Contains(202) && gd.chara[gd.personFromId[2]].i_yaku == Setting.Yakuwari.y_Jinro && gd.chara[0].i_yaku == Setting.Yakuwari.y_Jinro && gd.chara[gd.personFromId[7]].i_yaku != Setting.Yakuwari.y_Jinro && gd.chara[gd.personFromId[3]].i_yaku != Setting.Yakuwari.y_Jinro && gd.chara[gd.personFromId[7]].i_yaku != Setting.Yakuwari.y_Fox;
             return false;
@@ -128,15 +130,40 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         [HarmonyPrefix]
         static bool BugLoop(TutorialLoop19Scenario __instance, ref bool __result, ref gnosia.GameData gd)
         {
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if ((options?.TutorialHandling ?? ArchipelagoData.TutorialHandling.Vanilla) == ArchipelagoData.TutorialHandling.SkipAndRemoveLocations
+                || !(options?.RandomizeRoleUnlocks ?? true))
+            {
+                return true;
+            }
             bool baseResult = BaseCanOpen(__instance, ref gd);
             __result = baseResult && gd.baseData.loop >= 16 && !ArchipelagoClient.ServerData.CheckedLocations.Contains(1508) && Plugin.found_characters[11];
             return false;
+        }
+
+        [HarmonyPatch(typeof(TutorialAfterBugScenario), "CanOpen")]
+        [HarmonyPrefix]
+        static bool BugTutorial(TutorialAfterBugScenario __instance, ref bool __result, ref gnosia.GameData gd)
+        {
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if ((options?.TutorialHandling ?? ArchipelagoData.TutorialHandling.Vanilla) != ArchipelagoData.TutorialHandling.Vanilla)
+            {
+                //Don't open the event
+                __result = false;
+                return false;
+            }
+            return true;
         }
 
         [HarmonyPatch(typeof(SQ4Scenario), "Close")]
         [HarmonyPrefix]
         static bool SQ2GnosiaIntroClose(SQ4Scenario __instance, ref gnosia.GameData gd, ref gnosia.GameData.scenarioData sd)
         {
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if (!(options?.RandomizeNotes ?? true))
+            {
+                return true; //Run original
+            }
             gd.baseData.sce_flg = gd.baseData.sce_flg ^ 16384UL;
             if (ArchipelagoClient.ServerData.CheckedLocations.Contains(202) && ArchipelagoClient.ServerData.CheckedLocations.Contains(703))
             {
@@ -150,6 +177,11 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         [HarmonyPrefix]
         static bool Stella5Close(Stella4Scenario __instance, ref gnosia.GameData gd, ref gnosia.GameData.scenarioData sd)
         {
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if (!(options?.RandomizeNotes ?? true))
+            {
+                return true; //Run original
+            }
             gd.baseData.sce_flg = gd.baseData.sce_flg ^ 16384UL;
             if (ArchipelagoClient.ServerData.CheckedLocations.Contains(405)) //Changed condition
             {

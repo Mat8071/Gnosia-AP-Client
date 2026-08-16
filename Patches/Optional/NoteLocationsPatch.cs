@@ -1,34 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using HarmonyLib;
-using gnosia;
-using JetBrains.Annotations;
-using UnityEngine;
 using coreSystem;
-using util;
-using setting;
-using UnityEngine.UI;
-using Mono.Cecil.Cil;
-using System.Reflection;
-using systemService.saveData;
+using gnosia;
 using GnosiaArchipelagoRandomizer.Archipelago;
-using Newtonsoft.Json.Serialization;
-using Steamworks;
+using GnosiaArchipelagoRandomizer.Utils;
+using HarmonyLib;
+using setting;
+using systemService.saveData;
+using UnityEngine;
+using UnityEngine.UI;
+using util;
 
-namespace GnosiaArchipelagoRandomizer.Patches.Core
+namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
     [HarmonyPatch]
-    class LocationPatches
+    class NoteLocationsPatch
     {
-        static string GetCharaName(Array chara, gnosia.GameData gd, int cid)
-        {
-            var entry = chara.GetValue((int)gd.chara[cid].id);
-            var nameField = AccessTools.Field(entry.GetType(), "name");
-            return (string)nameField.GetValue(entry);
-        }
-
-
         [HarmonyPatch(typeof(Cipi1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void LetsCollaborate(Cipi1Scenario __instance)
@@ -82,70 +69,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 gd.forwardNext = true;
             };
             __instance.actions[1] = action;
-            action = __instance.actions[6];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Get Other Stuff
-                Type dataType = AccessTools.TypeByName("gnosia.Data");
-                Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
-                //Base
-                sp.LoadTexture("p06a");
-                sp.WaitSec(0.45f, true);
-                sp.WaitLoad();
-                sp.PlaySeInScript("se_jidoudoa", 1f);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_none, 20U, false, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    uint num2 = 6U;
-                    sp.m_sb[20U].SetPackedTexture(0, sp.m_sb[20U].gameObject.transform, "p06a", "body", 100U * num2, 10U, new Vector2?(new Vector2((float)(18446744073709551416UL + (ulong)(50U * num2)), 0f)), null, null, false);
-                    sp.m_sb[20U].m_spriteMap[100U * num2].GetComponent<Image>().material = sp.m_rs.uiCharaDefaultMat;
-                    sp.m_sb[20U].m_spriteMap[100U * num2].GetComponent<Image>().material.SetColor("_Color", Color.white);
-                    sp.m_sb[20U].m_spriteMap[100U * num2].SetSize(0.7f);
-                    sp.m_sb[20U].m_spriteMap[100U * num2].SetDisplayOffsetY((float)sp.m_rs.m_displaySize.height - sp.m_sb[20U].m_spriteMap[100U * num2].GetSizeInDisplay().y * sp.m_sb[20U].m_spriteMap[100U * num2].GetSize() * GraphicsContext.m_textureRatio);
-                    return true;
-                }, (float e) => true, true));
-                sp.ShowChara(ad.mainP, 0, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(120f, 65f, 720f, 405f), 0f, 1f, false, null, true);
-                sp.SetFadeScreen(new List<uint> { 50001U, 50002U }, 50003U, 0.3f, 0, true, true, true);
-                sp.WaitSec(0.4f, true);
-                List<string> list4 = Util.Split(sp.m_rs.GetScenarioCipiText(0, 21, 0), new char[] { '|' });
-                string text2 = list4[0];
-                Util.Replace(ref text2, "{1}", GetCharaName(chara, gd, ad.targetP));
-                list4[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, false, false, true, true);
-                sp.WaitSec(0.4f, true);
-                sp.PlayBgmInScript("bgm03", 0f, 0.75f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioCipiText(0, 22, 1), new char[] { '|' });
-                text2 = list4[0];
-                Util.Replace(ref text2, "{1}", GetCharaName(chara, gd, ad.targetP));
-                list4[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioCipiText(0, 23, 3), new char[] { '|' });
-                text2 = list4[0];
-                Util.Replace(ref text2, "{1}", GetCharaName(chara, gd, ad.targetP));
-                list4[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadTexture("p06a");
-                sp.UnloadPlace();
-                sp.WaitSec(0.5f, true);
-                Plugin.CheckLocationsInScript(10);
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.baseData.gainExp += 50U;
-                gd.forwardNext = true;
-            };
-            __instance.actions[6] = action;
         }
-
 
         [HarmonyPatch(typeof(Cipi2Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -190,7 +114,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[4] = action;
         }
 
-
         [HarmonyPatch(typeof(Cipi3Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Chipie5(Cipi3Scenario __instance)
@@ -218,13 +141,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[7] = action;
         }
 
-
         [HarmonyPatch(typeof(Cipi4Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Chipie6Shigemichi2(Cipi4Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[5];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad) 
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -266,7 +188,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[5] = action;
         }
-
 
         [HarmonyPatch(typeof(Comet1Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -312,7 +233,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[10] = action;
         }
-
 
         [HarmonyPatch(typeof(Comet2Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -363,7 +283,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[8] = action;
         }
-
 
         [HarmonyPatch(typeof(Comet3Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -672,42 +591,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[14] = action;
         }
 
-
-        [HarmonyPatch(typeof(Comet4Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void SayYoureHuman(Comet4Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[5];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.FadeBgmInScript(-1f, 0.8f, 1.2f, false, -1);
-                List<string> list5 = Util.Split(sp.m_rs.GetScenarioCommetText(3, 24, 0), new char[] { '|' });
-                string text2 = list5[0];
-                list5[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list5, true, true, false, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioCommetText(3, 25, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list5, true, true, false, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioCommetText(3, 26, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 2, list5, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadTexture("p08a");
-                sp.UnloadPlace();
-                sp.WaitSec(0.5f, true);
-                Plugin.CheckLocationsInScript(5);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[5] = action;
-        }
-
-
         [HarmonyPatch(typeof(Comet5Scenario), "SetParam")]
         [HarmonyPostfix]
         static void AdventureInAFrozenWorld(Comet5Scenario __instance)
@@ -818,7 +701,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[3] = action;
         }
 
-
         [HarmonyPatch(typeof(Gina1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Gina3(Gina1Scenario __instance)
@@ -859,65 +741,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[15] = action;
         }
-
-
-        [HarmonyPatch(typeof(Gina2Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void DontBeFooled(Gina2Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[4];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Get Other Stuff
-                Type dataType = AccessTools.TypeByName("gnosia.Data");
-                Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
-                //Base
-                List<string> list4 = Util.Split(sp.m_rs.GetScenarioGinaText(1, 11, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioGinaText(1, 12, 5), new char[] { '|' });
-                string text4 = list4[0];
-                Util.Replace(ref text4, "{1}", GetCharaName(chara, gd, ad.targetP));
-                list4[0] = text4;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioGinaText(1, 13, 0), new char[] { '|' });
-                text4 = list4[0];
-                Util.Replace(ref text4, "{1}", GetCharaName(chara, gd, ad.targetP));
-                list4[0] = text4;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                if (!ArchipelagoClient.ServerData.CheckedLocations.Contains(18)) //Changed condition
-                {
-                    sp.WaitSec(0.1f, false);
-                    Plugin.CheckLocationsInScript(18);
-                    gd.baseData.gainExp += 50U;
-                }
-                list4 = Util.Split(sp.m_rs.GetScenarioGinaText(1, 16, 3), new char[] { '|' });
-                text4 = list4[0];
-                Util.Replace(ref text4, "{0}", gd.takashiName);
-                list4[0] = text4;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioGinaText(1, 17, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list4, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 3.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                if (!ArchipelagoClient.ServerData.CheckedLocations.Contains(104)) //Changed condition
-                {
-                    sp.WaitSec(0.75f, true);
-                    int mainP = ad.mainP;
-                    Plugin.CheckLocationsInScript(104);
-                    gd.baseData.gainExp += 50U;
-                }
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.6f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[4] = action;
-        }
-
 
         [HarmonyPatch(typeof(Gina3Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -1018,7 +841,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(Gina6Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Gina6(Gina6Scenario __instance)
@@ -1075,7 +897,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[1] = action;
         }
-
 
         [HarmonyPatch(typeof(Jonas1Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -1160,7 +981,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[5] = action;
         }
-
 
         [HarmonyPatch(typeof(Jonas2Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -1334,111 +1154,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[14] = action;
         }
-
-
-        [HarmonyPatch(typeof(Jonas3Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void Obfuscate(Jonas3Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                ScenarioContents.ChangeSceOnFlg(ref gd, ref sd, 2U);
-                sd.flg |= 16384;
-                sp.WaitSec(0.45f, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    sp.m_sb[50001U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    sp.m_sb[50002U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.ShowChara(ad.targetP, 1, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(240f, 80f, 480f, 270f), 0f, 1f, true, null, true);
-                sp.WaitFade(new List<uint> { 50001U, 50002U }, true, true);
-                sp.WaitSec(0.4f, true);
-                List<string> list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 2, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list, false, true, true, true);
-                sp.PlayBgmInScript("bgm03", 0f, 0.9f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 3, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, ad.mainP, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 4, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 5, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list, false, false, false, true);
-                sp.LoadTexture("ivep07_01_1");
-                sp.WaitLoad();
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_none, 20U, false, false, -1);
-                    sp.SetCharaSingleTexture(10000, "ivep07_01_1", 1U, 0f, 20U);
-                    return true;
-                }, (float e) => true, false));
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(240f, 80f, 480f, 270f), 0.4f, -2.5f, false, new Vector4?(new Vector4(0f, 80f, 480f, 270f)), true);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 6, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list, true, true, true, true);
-                sp.FadeBgmInScript(-1f, 0.45f, 1.2f, false, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, true, true);
-                sp.UnloadTexture("ivep07_01_1");
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    return true;
-                }, (float e) => true, false));
-                sp.ShowChara(ad.mainP, 5, 0, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(0f, 80f, 480f, 270f), 0.4f, -2.5f, false, new Vector4?(new Vector4(240f, 80f, 480f, 270f)), true);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 7, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 8, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, ad.mainP, 2, list, true, false, false, true);
-                sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 9, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list, false, false, false, true);
-                sp.WaitText(50U, "test", false);
-                sp.PlayBgmInScript("bgm09", 0f, 0.85f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 10, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 11, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 12, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, -1, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 13, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.counterP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioJonasText(2, 14, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0.4f, 0.75f, true, -1);
-                Plugin.CheckLocationsInScript(14);
-                gd.baseData.gainExp += 50U;
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.7f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[1] = action;
-        }
-
 
         [HarmonyPatch(typeof(Jonas4Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -1621,13 +1336,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[10] = action;
         }
 
-
         [HarmonyPatch(typeof(Kukul1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Kukrushka2Otome5(Kukul1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[5];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -1655,13 +1369,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[5] = action;
         }
 
-
         [HarmonyPatch(typeof(Kukul2Scenario), "SetParam")]
         [HarmonyPostfix]
         static void TheKukrushkaProblem(Kukul2Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[7];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -1773,7 +1486,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[7] = action;
         }
-
 
         [HarmonyPatch(typeof(Kukul3Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -2032,13 +1744,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[2] = action;
         }
 
-
         [HarmonyPatch(typeof(Kukul5Scenario), "SetParam")]
         [HarmonyPostfix]
         static void ToTheHangar(Kukul5Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[13];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2081,7 +1792,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[13] = action;
             action = __instance.actions[16];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2118,7 +1829,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[16] = action;
             action = __instance.actions[18];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2310,172 +2021,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[18] = action;
         }
 
-
-        [HarmonyPatch(typeof(Kukul6Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void Regret(Kukul6Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                ScenarioContents.ChangeSceOnFlg(ref gd, ref sd, 2U);
-                sd.flg |= 16384;
-                sp.LoadSound("se_ashioto_14");
-                sp.WaitLoad();
-                sp.PlaySeInScript("se_jidoudoa", 1f);
-                sp.PlaySeInScript("se_ashioto_14", 1f);
-                sp.LoadTexture("p14a");
-                sp.WaitSec(0.45f, true);
-                sp.WaitLoad();
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.ChangeCharaTexture(14U, "p14a", 10U, 20U, true);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    return true;
-                }, (float e) => true, false));
-                sp.ShowChara(ad.mainP, 3, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(320f, 130f, 320f, 180f), 0f, 1f, true, null, true);
-                sp.WaitSec(0.6f, true);
-                sp.StopAllSeInScript();
-                sp.PlaySeInScript("se_fuku_02", 1f);
-                sp.SetFadeScreen(new List<uint> { 50001U, 50002U }, 50003U, 0.25f, 4, true, true, true);
-                sp.PlayBgmInScript("bgm21", 1.2f, 0.8f, -1, true);
-                sp.WaitSec(0.2f, true);
-                List<string> list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 2, 3), new char[] { '|' });
-                string text = list[0];
-                list[0] = text;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list, true, true, true, true);
-                sp.UnloadSound("se_ashioto_14");
-                sp.WaitSec(0.4f, true);
-                sp.PlayBgmInScript("bgm03", 0.4f, 0.8f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 3, 0), new char[] { '|' });
-                text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.SetNormalSerifu(ad.targetP, 0, 0, list, false, false, false, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 4, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 5, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 0, list, false, false, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.ChangeCharaTexture(14U, "p14", 10U, 20U, true);
-                    return true;
-                }, (float e) => true, true));
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.FadeBgmInScript(-1f, 0f, 0.2f, false, -1);
-                sp.PlaySeInScript("se_se_04", 1f);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.15f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(ad.mainP, 3, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(280f, 100f, 400f, 227f), 0f, 1f, false, null, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(2408578911U, 28U, -1);
-                    sp.m_sb[0U].SetFade(0.4f, 1f, 102, 0.5f, 0, false);
-                    sp.m_sb[20U].SetFade(0.4f, 1f, 102, 0.5f, 1, false);
-                    sp.m_sb[28U].SetFade(0.4f, 0f, 0, 1f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitFade(new List<uint> { 28U, 30U }, true, true);
-                sp.WaitFade(new List<uint> { 0U, 20U }, false, true);
-                sp.FadeBgmInScript(0f, 1f, 4f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 6, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 7, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 0, list, true, false, false, true);
-                sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 8, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list, true, false, false, true);
-                sp.PlayBgmInScript("bgm05", 0f, 1f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 9, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioKukulText(5, 10, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 0, list, false, true, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.ChangeCharaTexture(14U, "p14a", 10U, 20U, true);
-                    return true;
-                }, (float e) => true, true));
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(ad.mainP, 5, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(240f, 80f, 480f, 270f), 0.4f, -2.5f, true, null, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.WaitSec(1.5f, true);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadTexture("p14a");
-                sp.UnloadPlace();
-                sp.WaitSec(0.5f, true);
-                Plugin.CheckLocationsInScript(16);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[1] = action;
-        }
-
-
-        [HarmonyPatch(typeof(Otome1Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void DontVote(Otome1Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[7];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list7;
-                if ((gd.actionFlg & 16UL) == 0UL)
-                {
-                    list7 = Util.Split(sp.m_rs.GetScenarioOtomeText(0, 35, 0), new char[] { '|' });
-                    sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, true, false, true);
-                }
-                list7 = Util.Split(sp.m_rs.GetScenarioOtomeText(0, 36, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, false, false, true);
-                list7 = Util.Split(sp.m_rs.GetScenarioOtomeText(0, 37, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, true, false, true);
-                list7 = Util.Split(sp.m_rs.GetScenarioOtomeText(0, 38, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitSec(0.7f, true);
-                int mainP = ad.mainP;
-                Plugin.CheckLocationsInScript(1204);
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(1f, true);
-                Plugin.CheckLocationsInScript(7);
-                gd.baseData.gainExp += 100U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.4f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[7] = action;
-        }
-
-
         [HarmonyPatch(typeof(Otome2Scenario), "SetParam")]
         [HarmonyPostfix]
         static void OtomesResolution(Otome2Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[3];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2651,13 +2202,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[3] = action;
         }
 
-
         [HarmonyPatch(typeof(Rakio1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void ShowerRoomRaqio(Rakio1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2807,77 +2357,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[2] = action;
         }
 
-
-        [HarmonyPatch(typeof(Rakio2Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void RaqioQuizDefiniteHuman(Rakio2Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[3];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list3 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 12, 0), new char[] { '|' });
-                sp.SetNormalSerifu(0, ad.targetP, 1, list3, true, false, true, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 13, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 14, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, true, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 15, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, true, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 16, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitSec(0.5f, true);
-                Plugin.CheckLocationsInScript(2, 3, 4);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[3] = action;
-            action = __instance.actions[4];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list4 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 20, 0), new char[] { '|' });
-                sp.SetNormalSerifu(0, ad.targetP, 1, list4, true, false, true, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 21, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list4, true, false, false, true);
-                list4 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 22, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list4, true, true, false, true);
-                sp.WaitSec(0.1f, false);
-                Plugin.CheckLocationsInScript(2, 3, 4);
-                gd.baseData.gainExp += 50U;
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioRakioText(1, 24, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                list4 = Util.Split(sp.m_rs.GetScenarioRakioText(1, 25, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list4, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[4] = action;
-        }
-
-
         [HarmonyPatch(typeof(Rakio4Scenario), "SetParam")]
         [HarmonyPostfix]
         static void RaqioQuizNote4(Rakio4Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[3];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2906,7 +2391,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[3] = action;
             action = __instance.actions[4];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -2936,13 +2421,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[4] = action;
         }
 
-
         [HarmonyPatch(typeof(Rakio5Scenario), "SetParam")]
         [HarmonyPostfix]
         static void RaqioQuizNote5(Rakio5Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[7];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -3055,36 +2539,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[10] = action;
         }
 
-
-        [HarmonyPatch(typeof(Rakio6Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void RaqioQuizFreezeAll(Rakio6Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[5];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list5 = Util.Split(sp.m_rs.GetScenarioRakioText(5, 23, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list5, true, true, false, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioRakioText(5, 24, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list5, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitSec(0.5f, true);
-                Plugin.CheckLocationsInScript(9);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[5] = action;
-        }
-
-
         [HarmonyPatch(typeof(Rakio7Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Raqio6(Rakio7Scenario __instance)
@@ -3135,13 +2589,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[16] = action;
         }
 
-
         [HarmonyPatch(typeof(Rakio8Scenario), "SetParam")]
         [HarmonyPostfix]
         static void TheFinalProblem(Rakio8Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[3];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -3185,13 +2638,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[3] = action;
         }
 
-
         [HarmonyPatch(typeof(Remnant1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void InescapablePast(Remnant1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[9];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -3357,7 +2809,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[9] = action;
         }
 
-
         [HarmonyPatch(typeof(Remnant2Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Remnan2(Remnant2Scenario __instance)
@@ -3487,13 +2938,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(Remnant3Scenario), "SetParam")]
         [HarmonyPostfix]
         static void HopeForTheFuture(Remnant3Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[14];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -3544,109 +2994,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[14] = action;
         }
-
-
-        [HarmonyPatch(typeof(Setsu1Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void Exaggerate(Setsu1Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[4];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.FadeBgmInScript(-1f, 0f, 1f, true, -1);
-                List<string> list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 11, 0), new char[] { '|' });
-                string text2 = list2[0];
-                Util.Replace(ref text2, "{0}", gd.takashiName);
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list2, false, false, false, true);
-                sp.WaitText(50U, "test", false);
-                sp.PlayBgmInScript("bgm03", 0f, 1f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 12, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list2, false, false, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.m_sb[50U].m_textAreaMap["test"].nowLine >= 1, true));
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(ad.targetP, 6, 1, 20U, false);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 13, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 14, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, ad.targetP, 0, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 15, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 16, 2), new char[] { '|' });
-                text2 = list2[0];
-                Util.Replace(ref text2, "{0}", gd.takashiName);
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 17, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list2, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.PlaySeInScript("se_ashioto_02", 1f);
-                sp.FadeBgmInScript(-1f, 0.4f, 1.5f, false, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 30U, 0.4f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.UnloadTexture("p05a");
-                sp.LoadPlace(31, false);
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.WaitSec(1.5f, true);
-                sp.StopAllSeInScript();
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    sp.SetColorScreen(255U, 50000U, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.ShowChara(ad.mainP, 0, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(120f, 40f, 720f, 405f), 0f, 1f, true, null, true);
-                sp.SetFadeScreen(new List<uint> { 50000U }, 50001U, 0.4f, 0, true, true, true);
-                sp.WaitSec(0.2f, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 18, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, false, true, true, true);
-                sp.WaitSec(0.4f, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 19, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, true, true, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 20, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, false, true, false, true);
-                sp.WaitText(50U, "test", true);
-                sp.FadeBgmInScript(0f, 0.4f, 2f, false, -1);
-                Plugin.CheckLocationsInScript(13);
-                gd.baseData.gainExp += 50U;
-                sp.HideInterface(50U, true);
-                sp.FadeBgmInScript(-1f, 0.8f, 1.5f, false, -1);
-                sp.WaitSec(0.4f, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 23, 3), new char[] { '|' });
-                text2 = list2[0];
-                Util.Replace(ref text2, "{0}", gd.takashiName);
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 24, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, true, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSetsuText(0, 25, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 0.8f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[4] = action;
-        }
-
 
         [HarmonyPatch(typeof(Setsu2Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -3739,7 +3086,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[4] = action;
         }
-
 
         [HarmonyPatch(typeof(Setsu6Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -3857,13 +3203,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[11] = action;
         }
 
-
         [HarmonyPatch(typeof(Setsu8Scenario), "SetParam")]
         [HarmonyPostfix]
         static void SetsusOrigins(Setsu8Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -4101,7 +3446,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[17] = action;
         }
 
-
         [HarmonyPatch(typeof(Setsu9Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Setsu3(Setsu9Scenario __instance)
@@ -4141,7 +3485,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[1] = action;
         }
-
 
         [HarmonyPatch(typeof(Shamin1Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -4198,65 +3541,14 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 gd.forwardNext = true;
             };
             __instance.actions[4] = action;
-            action = __instance.actions[5];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list5 = Util.Split(sp.m_rs.GetScenarioShaminText(0, 20, 0), new char[] { '|' });
-                sp.SetNormalSerifu(0, ad.targetP, 1, list5, true, false, true, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioShaminText(0, 21, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list5, true, false, false, true);
-                sp.FadeBgmInScript(-1f, 0f, 3f, true, -1);
-                list5 = Util.Split(sp.m_rs.GetScenarioShaminText(0, 22, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list5, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.8f, 0, true, true, true);
-                sp.UnloadPlace();
-                sp.WaitSec(0.2f, true);
-                sp.PlaySeInScript("se_fuku_02", 1f);
-                sp.WaitSec(0.2f, true);
-                sp.PlayBgmInScript("bgm04", 0f, 1f, -1, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioShaminText(0, 23, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list5, true, true, true, false);
-                sp.FadeBgmInScript(0.4f, 1f, 0.8f, false, -1);
-                sp.PlaySeInScript("se_fuku_02", 1f);
-                sp.WaitSec(0.2f, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioShaminText(0, 24, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list5, true, true, true, false);
-                sp.FadeBgmInScript(0.4f, 1f, 0.8f, false, -1);
-                sp.PlaySeInScript("se_fuku_02", 1f);
-                sp.WaitSec(0.2f, true);
-                list5 = Util.Split(sp.m_rs.GetScenarioShaminText(0, 25, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list5, true, true, true, false);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 3.5f, true, -1);
-                sp.RemoveScreenInScript(50U);
-                sp.WaitSec(0.5f, true);
-                Plugin.CheckLocationsInScript(19);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.2f, true);
-                if (!ArchipelagoClient.ServerData.CheckedLocations.Contains(1304)) //Changed condition
-                {
-                    int targetP = ad.targetP;
-                    Plugin.CheckLocationsInScript(1304);
-                    sp.WaitSec(0.2f, true);
-                }
-                gd.forwardNext = true;
-            };
-            __instance.actions[5] = action;
         }
-
 
         [HarmonyPatch(typeof(Shamin2Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Shaming2Otome3(Shamin2Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -4365,52 +3657,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
-        [HarmonyPatch(typeof(Shamin3Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void SmallTalk(Shamin3Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[7];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list7;
-                if ((gd.actionFlg & 4UL) == 0UL)
-                {
-                    list7 = Util.Split(sp.m_rs.GetScenarioShaminText(2, 18, 6), new char[] { '|' });
-                    sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, false, false, true);
-                }
-                list7 = Util.Split(sp.m_rs.GetScenarioShaminText(2, 19, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, false, false, true);
-                list7 = Util.Split(sp.m_rs.GetScenarioShaminText(2, 20, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, true, false, true);
-                list7 = Util.Split(sp.m_rs.GetScenarioShaminText(2, 21, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list7, true, true, false, true);
-                sp.FadeBgmInScript(-1f, 0.6f, 0.4f, false, -1);
-                sp.WaitSec(0.05f, false);
-                Plugin.CheckLocationsInScript(8);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.2f, true);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[7] = action;
-        }
-
-
         [HarmonyPatch(typeof(Shamin4Scenario), "SetParam")]
         [HarmonyPostfix]
         static void ShamingsPromise(Shamin4Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[18];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -4542,84 +3794,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[18] = action;
         }
-
-
-        [HarmonyPatch(typeof(Sige1Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void SeekAgreement(Sige1Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                ScenarioContents.ChangeSceOnFlg(ref gd, ref sd, 2U);
-                sd.flg |= 16384;
-                int num = gd.personFromId[7];
-                sp.WaitSec(0.45f, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    sp.m_sb[50001U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    sp.m_sb[50002U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.ShowChara(ad.targetP, 0, 0, 20U, false);
-                sp.ShowChara(ad.mainP, 0, 2, 20U, false);
-                sp.WaitFade(new List<uint> { 50001U, 50002U }, true, true);
-                sp.WaitSec(0.2f, true);
-                List<string> list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 2, 4), new char[] { '|' });
-                string text = list[0];
-                list[0] = text;
-                sp.SetNormalSerifu(0, -1, 0, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 3, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 0, list, false, false, false, true);
-                sp.PlayBgmInScript("bgm02", 0f, 0.8f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 4, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 0, list, true, true, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 5, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, ad.targetP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 6, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 7, 0), new char[] { '|' });
-                sp.SetNormalSerifu(num, ad.mainP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 8, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 9, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 10, 5), new char[] { '|' });
-                sp.SetNormalSerifu(num, ad.counterP, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 11, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 12, 6), new char[] { '|' });
-                sp.SetNormalSerifu(num, -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 13, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 14, 1), new char[] { '|' });
-                sp.SetNormalSerifu(num, -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 15, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioShigeText(0, 16, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitSec(0.7f, true);
-                Plugin.CheckLocationsInScript(11);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[1] = action;
-        }
-
 
         [HarmonyPatch(typeof(Sige2Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -4948,7 +4122,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 sp.PlaySeInScript("se_gatyan", 1f);
                 sp.WaitFade(new List<uint> { 30U }, true, true);
                 sp.PlaySeInScript("se_pusyu", 1f);
-                sp.SetDialogScreen(200U, GetCharaName(chara, gd, i) + sp.m_rs.GetScenarioShigeText(1, 45, -1), 1, false);
+                sp.SetDialogScreen(200U, MyUtils.GetCharaName(chara, gd, i) + sp.m_rs.GetScenarioShigeText(1, 45, -1), 1, false);
                 sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
                 sp.SetFadeScreen(new List<uint> { 15U, 20U }, 30U, 0.1f, 5, true, true, true);
                 sp.WaitSec(0.5f, true);
@@ -4962,7 +4136,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[3] = action;
         }
-
 
         [HarmonyPatch(typeof(Sige3Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -4992,13 +4165,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[5] = action;
         }
 
-
         [HarmonyPatch(typeof(Sige4Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Shigemichi4(Sige4Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[6];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -5066,7 +4238,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[6] = action;
         }
-
 
         [HarmonyPatch(typeof(Sige5Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -5147,48 +4318,11 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[5] = action;
         }
 
-
         [HarmonyPatch(typeof(SQ1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void FoolAndBeFooled(SQ1Scenario __instance)
         {
-            ScenarioContents.ActionContents action = __instance.actions[8];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list8 = Util.Split(sp.m_rs.GetScenarioSQText(0, 30, 1), new char[] { '|' });
-                string text7 = list8[0];
-                Util.Replace(ref text7, "{0}", gd.takashiName);
-                list8[0] = text7;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list8, true, true, false, true);
-                list8 = Util.Split(sp.m_rs.GetScenarioSQText(0, 31, 0), new char[] { '|' });
-                text7 = list8[0];
-                Util.Replace(ref text7, "{0}", gd.takashiName);
-                list8[0] = text7;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list8, true, true, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.UnloadTexture("p02a");
-                sp.WaitSec(0.7f, true);
-                if ((gd.baseData.sce_ind_flg[sd.id] & 256) == 0)
-                {
-                    Plugin.CheckLocationsInScript(17);
-                }
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                if ((gd.baseData.sce_ind_flg[sd.id] & 256) == 0)
-                {
-                    gd.baseData.gainExp += 50U;
-                }
-                sp.WaitSec(0.4f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[8] = action;
-            action = __instance.actions[18];
+            ScenarioContents.ActionContents action = __instance.actions[18];
             action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
@@ -5281,126 +4415,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[18] = action;
         }
 
-
-        [HarmonyPatch(typeof(SQ2Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void Retaliate(SQ2Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[4];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.FadeBgmInScript(-1f, 0f, 1f, true, -1);
-                List<string> list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 11, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list2, false, false, false, true);
-                sp.WaitText(50U, "test", false);
-                sp.PlayBgmInScript("bgm03", 0f, 1f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 12, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 13, 5), new char[] { '|' });
-                string text2 = list2[0];
-                Util.Replace(ref text2, "{0}", gd.takashiName);
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list2, false, false, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.m_sb[50U].m_textAreaMap["test"].nowLine >= 1 && sp.m_sb[50U].m_textAreaMap["test"].strNowList[1] >= 5, true));
-                sp.FadeBgmInScript(-1f, 0f, 0.25f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(ad.mainP, 1, 2, 20U, false);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.PlayBgmInScript("bgm05", 0f, 1f, -1, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 14, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 15, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 16, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, ad.mainP, 0, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 17, 0), new char[] { '|' });
-                text2 = list2[0];
-                Util.Replace(ref text2, "{0}", gd.takashiName);
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 18, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 19, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.counterP, ad.mainP, 0, list2, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.PlaySeInScript("se_ashioto_02", 1f);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.4f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.UnloadTexture("p05a");
-                sp.LoadPlace(31, false);
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.LoadTexture("p11a");
-                sp.WaitSec(1.5f, true);
-                sp.WaitLoad();
-                sp.StopAllSeInScript();
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.ChangeCharaTexture(11U, "p11a", 10U, 20U, true);
-                    sp.SetColorScreen(255U, 30U, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.ShowChara(ad.mainP, 1, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(120f, 40f, 720f, 405f), 0f, 1f, true, null, true);
-                sp.SetFadeScreen(new List<uint> { 30U }, 31U, 0.4f, 0, true, true, true);
-                sp.WaitSec(0.2f, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 20, 1), new char[] { '|' });
-                text2 = list2[0];
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, false, true, true, true);
-                sp.WaitSec(0.4f, true);
-                sp.PlayBgmInScript("bgm03", 0f, 0.8f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 21, 7), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, true, true, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 22, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, false, true, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.m_sb[50U].m_textAreaMap["test"].nowLine >= 1, false));
-                sp.FadeBgmInScript(-1f, 0f, 1.2f, false, -1);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.WaitSec(0.05f, false);
-                Plugin.CheckLocationsInScript(15);
-                gd.baseData.gainExp += 50U;
-                sp.FadeBgmInScript(0f, 0.4f, 2f, false, -1);
-                sp.WaitSec(0.4f, true);
-                sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 25, 2), new char[] { '|' });
-                text2 = list2[0];
-                Util.Replace(ref text2, "{0}", gd.takashiName);
-                list2[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, true, false, false, true);
-                sp.PlayBgmInScript("bgm18", 2f, 0.85f, -1, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 26, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, true, true, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 27, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, true, true, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioSQText(1, 28, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, 0, 1, list2, false, true, false, true);
-            };
-            __instance.actions[4] = action;
-        }
-
-
         [HarmonyPatch(typeof(SQ3Scenario), "SetParam")]
         [HarmonyPostfix]
         static void TearsOfSQ(SQ3Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[28];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -5655,7 +4675,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[29] = action;
         }
 
-
         [HarmonyPatch(typeof(SQ4Scenario), "SetParam")]
         [HarmonyPostfix]
         static void SQ2GnosiaIntro(SQ4Scenario __instance)
@@ -5735,13 +4754,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(Stella1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void ShigemichiInLove(Stella1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[14];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -5777,7 +4795,7 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[14] = action;
             action = __instance.actions[16];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -5891,13 +4909,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[16] = action;
         }
 
-
         [HarmonyPatch(typeof(Stella2Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Flowers(Stella2Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[5];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -5920,102 +4937,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             };
             __instance.actions[5] = action;
         }
-
-
-        [HarmonyPatch(typeof(Stella3Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TearsGoBy(Stella3Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Get Other Stuff
-                Type dataType = AccessTools.TypeByName("gnosia.Data");
-                Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
-                //Base
-                sd.flg |= 16384;
-                ScenarioContents.ChangeSceOnFlg(ref gd, ref sd, 2U);
-                sp.WaitSec(0.45f, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.ShowChara(ad.targetP, 6, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(240f, 80f, 480f, 270f), 0f, 1f, true, null, true);
-                sp.SetFadeScreen(new List<uint> { 50001U, 50002U }, 50003U, 0.3f, 0, true, true, true);
-                List<string> list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 8, 6), new char[] { '|' });
-                string text2 = list3[0];
-                Util.Replace(ref text2, "{1}", GetCharaName(chara, gd, ad.counterP));
-                list3[0] = text2;
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list3, false, true, true, true);
-                sp.WaitSec(0.4f, true);
-                sp.PlayBgmInScript("bgm15", 0f, 1f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 9, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list3, true, false, false, true);
-                if (gd.chara[ad.mainP].p_rate[ad.counterP] > 0f)
-                {
-                    list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 10, 4), new char[] { '|' });
-                }
-                else
-                {
-                    list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 11, 4), new char[] { '|' });
-                }
-                text2 = list3[0];
-                Util.Replace(ref text2, "{1}", GetCharaName(chara, gd, ad.counterP));
-                list3[0] = text2;
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 12, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 13, 1), new char[] { '|' });
-                text2 = list3[0];
-                Util.Replace(ref text2, "{1}", GetCharaName(chara, gd, ad.counterP));
-                list3[0] = text2;
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 14, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 15, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 16, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list3, false, true, false, true);
-                sp.LoadTexture("ivep04_02_0");
-                sp.WaitLoad();
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetCharaSingleTexture(10000, "ivep04_02_0", 2U, 0f, 20U);
-                    return true;
-                }, (float e) => true, false));
-                sp.SetNormalClipAnim(2);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioStellaText(2, 17, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 2, list3, true, true, true, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.UnloadTexture("ivep04_02_0");
-                sp.WaitSec(0.7f, true);
-                Plugin.CheckLocationsInScript(6);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.4f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[2] = action;
-        }
-
 
         [HarmonyPatch(typeof(Stella4Scenario), "SetParam")]
         [HarmonyPostfix]
@@ -6173,98 +5094,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[7] = action;
         }
 
-
-        [HarmonyPatch(typeof(Yuriko1Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void Chaos(Yuriko1Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.LoadTexture("ivep09_00_2");
-                sp.WaitLoad();
-                sp.FadeBgmInScript(-1f, 1f, 0.4f, false, -1);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.4f, 0, false, true, true);
-                sp.UnloadTexture("ivep09_00_1");
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, true, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ivep09_00_2", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                List<string> list2 = Util.Split(sp.m_rs.GetScenarioYurikoText(0, 9, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, true, true, false);
-                sp.FadeBgmInScript(-1f, 0.6f, 0.8f, false, -1);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.4f, 0, false, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, true, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ivep09_00_0", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioYurikoText(0, 10, 4), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 1, list2, true, true, true, true);
-                sp.WaitSec(0.05f, false);
-                sp.FadeBgmInScript(-1f, 0f, 3f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadTexture("ivep09_00_0");
-                sp.UnloadTexture("ivep09_00_2");
-                sp.WaitSec(0.7f, false);
-                Plugin.CheckLocationsInScript(12);
-                gd.baseData.gainExp += 50U;
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.2f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[2] = action;
-            action = __instance.actions[6];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.WaitSec(1f, true);
-                sp.FadeBgmInScript(-1f, 0f, 0.25f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.25f, 0, false, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, true, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ivep09_00_2", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                List<string> list6 = Util.Split(sp.m_rs.GetScenarioYurikoText(0, 20, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list6, false, true, true, false);
-                sp.WaitText(50U, "test", true);
-                Plugin.CheckLocationsInScript(12);
-                gd.baseData.gainExp += 50U;
-                sp.WaitSec(0.2f, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioYurikoText(0, 22, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                sp.HideInterface(50U, true);
-                sp.WaitSec(0.4f, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 50U }, 40002U, 1f, 0, false, true, true);
-                sp.UnloadTexture("ivep09_00_0");
-                sp.UnloadTexture("ivep09_00_2");
-                sp.WaitFade(new List<uint> { 40002U }, true, true);
-                sp.WaitSec(0.4f, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[6] = action;
-        }
-
-
         [HarmonyPatch(typeof(Yuriko2Scenario), "SetParam")]
         [HarmonyPostfix]
         static void StarshipOracle(Yuriko2Scenario __instance)
@@ -6355,13 +5184,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[11] = action;
         }
 
-
         [HarmonyPatch(typeof(Yuriko3Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Confrontation(Yuriko3Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[22];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -6460,13 +5288,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[22] = action;
         }
 
-
         [HarmonyPatch(typeof(Yuriko4Scenario), "SetParam")]
         [HarmonyPostfix]
         static void TheAlienGnos(Yuriko4Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[14];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -6583,13 +5410,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[14] = action;
         }
 
-
         [HarmonyPatch(typeof(RECipi0Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Chipie2Gnosia(RECipi0Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -6667,13 +5493,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(REComet1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Comet2(REComet1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -6761,13 +5586,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(REGina1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Gina2(REGina1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -6880,7 +5704,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(REJonas1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Jonas2(REJonas1Scenario __instance)
@@ -6959,13 +5782,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(REOtome1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Otome2(REOtome1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -7038,13 +5860,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(RERakio1Scenario), "SetParam")]
         [HarmonyPostfix]
         static void Raqio2(RERakio1Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -7105,13 +5926,12 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
             __instance.actions[1] = action;
         }
 
-
         [HarmonyPatch(typeof(RESQ0Scenario), "SetParam")]
         [HarmonyPostfix]
         static void SQ2ResultEvent(RESQ0Scenario __instance)
         {
             ScenarioContents.ActionContents action = __instance.actions[1];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
+            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
             {
                 //Get gd and sp
                 gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -7296,1351 +6116,6 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 gd.forwardNext = true;
             };
             __instance.actions[1] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop1Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop1(TutorialLoop1Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                gd.peopleFlg[6] = (ushort)((int)gd.peopleFlg[6] | (1 << ad.mainP));
-                List<string> list = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 3, -1), new char[] { '|' });
-                sp.SetInterface(50U, ad.mainP, -1, true, true);
-                sp.SetText(list[0], false, 50U, "test");
-                sp.WaitText(50U, "test", true);
-                Plugin.CheckLocationsInScript(1100);
-                sp.PlayBgmInScript("bgm14", 1.5f, 1f, -1, true);
-                sp.PlaySeInScript("se_square", 1f);
-                string scenarioTutorialText = sp.m_rs.GetScenarioTutorialText(1, 5, -1);
-                Util.Replace(ref scenarioTutorialText, "{0}", sp.m_rs.GetButtonName(0));
-                Util.Replace(ref scenarioTutorialText, "{1}", sp.m_rs.GetButtonName(1));
-                sp.SetDialogScreen(50400U, scenarioTutorialText, (Setting.language == 1) ? 3 : 2, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-            };
-            __instance.actions[2] = action;
-            action = __instance.actions[14];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Get Other Stuff
-                Type dataType = AccessTools.TypeByName("gnosia.Data");
-                Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
-                //Base
-                gd.pos = 1;
-                sp.StopAllSeInScript();
-                sp.PlaySeInScript("se_jidoudoa", 1f);
-                sp.WaitSec(0.6f, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    sp.m_sb[50001U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    sp.m_sb[50002U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.ShowChara(ad.mainP, 0, gd.pos, 20U, false);
-                sp.WaitFade(new List<uint> { 50001U, 50002U }, true, true);
-                sp.WaitSec(0.35f, true);
-                List<string> list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 45, 1), new char[] { '|' });
-                sp.PlayBgmInScript("bgm00", 0.5f, 0.4f, -1, true);
-                sp.SetNormalSerifu(ad.mainP, -1, gd.pos, list13, false, false, false, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                Plugin.CheckLocationsInScript(300);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 46, 0), new char[] { '|' });
-                string text4 = list13[0];
-                Util.Replace(ref text4, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list13[0] = text4;
-                sp.SetNormalSerifu(gd.personFromId[1], sd.mainP, 0, list13, true, false, false, true);
-                Plugin.CheckLocationsInScript(100);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 47, 5), new char[] { '|' });
-                sp.SetNormalSerifu(sd.mainP, gd.personFromId[1], 2, list13, true, false, false, true);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 48, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[2], sd.mainP, 0, list13, true, false, false, true);
-                Plugin.CheckLocationsInScript(200);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 49, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list13, true, false, false, true);
-                sp.FadeBgmInScript(-1f, 1f, 0.8f, false, -1);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 50, 2), new char[] { '|' });
-                text4 = list13[0];
-                Util.Replace(ref text4, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list13[0] = text4;
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list13, true, false, false, true);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 51, -1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, -1, list13, true, false, true, true);
-                sp.FadeBgmInScript(-1f, 0.6f, 1f, false, -1);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 52, 2), new char[] { '|' });
-                sp.SetNormalSerifu(sd.mainP, ad.mainP, 2, list13, true, false, false, true);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 53, 2), new char[] { '|' });
-                text4 = list13[0];
-                Util.Replace(ref text4, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list13[0] = text4;
-                sp.SetNormalSerifu(sd.mainP, ad.mainP, 2, list13, true, true, true, true);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 54, 0), new char[] { '|' });
-                text4 = list13[0];
-                Util.Replace(ref text4, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list13[0] = text4;
-                sp.SetNormalSerifu(gd.personFromId[1], -1, 0, list13, true, false, false, true);
-                list13 = Util.Split(sp.m_rs.GetScenarioTutorialText(1, 55, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[2], -1, 1, list13, false, false, false, true);
-            };
-            __instance.actions[14] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop2Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop2(TutorialLoop2Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[37];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Get Other Stuff
-                Type dataType = AccessTools.TypeByName("gnosia.Data");
-                Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
-                //Base
-                if (ad.mainP == 0)
-                {
-                    ad.mainP = gd.personFromId[1];
-                }
-                GameData.character character = gd.chara[ad.mainP];
-                Jinro.ClearTable(ref character.p_knowTable);
-                Jinro.IsY((Setting.Yakuwari)ad.type, ad.mainP, ref character.p_knowTable);
-                for (int num7 = 1; num7 <= 5; num7++)
-                {
-                    if (num7 != ad.type)
-                    {
-                        Jinro.IsNotY((Setting.Yakuwari)num7, ad.mainP, ref gd.knowTable);
-                    }
-                }
-                character.p_yaku = (Setting.Yakuwari)ad.type;
-                Jinro.MakeYakuAliveNum(ref gd);
-                if (character.i_yaku == Setting.Yakuwari.y_Uranai)
-                {
-                    Jinro.MakeFakeRireki(ad.mainP, (Setting.Yakuwari)ad.type, ref gd);
-                }
-                else
-                {
-                    Jinro.IsY(Setting.Yakuwari.y_Jinro, ad.targetP, ref character.p_knowTable);
-                    character.yaku_rireki[(int)(gd.baseData.day - 2)].Add((byte)(144L | (long)ad.targetP));
-                }
-                gd.chara[ad.mainP] = character;
-                ad.ctuizuiP = (ushort)(1 << ad.targetP);
-                gd.peopleFlg[6] = (ushort)((int)gd.peopleFlg[6] | (1 << ad.mainP));
-                gd.makeRate = true;
-                gd.GainHate(ad.mainP, 0.2f);
-                gd.pos = 1;
-                sp.FadeBgmInScript(-1f, 0.5f, 0.8f, false, -1);
-                List<string> list35 = Util.Split(sp.m_rs.GetScenarioTutorialText(2, 150, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, gd.pos, list35, true, false, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.sce_all_flg = gd.baseData.sce_all_flg | 2UL;
-                    return true;
-                }, (float e) => true, false));
-                sp.FadeBgmInScript(0f, 0.5f, 2f, false, -1);
-                sp.PlaySeInScript("se_jin_01", 1f);
-                list35 = Util.Split(sp.m_rs.GetScenarioTutorialText(2, 151, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, gd.pos, list35, true, true, true, true);
-                Plugin.CheckLocationsInScript(1501);
-                list35 = Util.Split(sp.m_rs.GetScenarioTutorialText(2, 152, 0), new char[] { '|' });
-                string text18 = list35[0];
-                Util.Replace(ref text18, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list35[0] = text18;
-                sp.SetNormalSerifu(ad.mainP, -1, gd.pos, list35, true, true, true, true);
-                sp.FadeBgmInScript(-1f, 0f, 0.1f, false, -1);
-                sp.PlaySeInScript("se_jin_05", 1f);
-                list35 = Util.Split(sp.m_rs.GetScenarioTutorialText(2, 153, 5), new char[] { '|' });
-                text18 = list35[0];
-                Util.Replace(ref text18, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list35[0] = text18;
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, gd.pos, list35, false, true, false, true);
-                sp.WaitText(50U, "test", true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.FadeBgmInScript(-1f, 0.5f, 1.2f, false, -1);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(2, 154, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                sp.HideInterface(50U, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[37] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop3Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop3(TutorialLoop3Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.WaitSec(0.5f, true);
-                List<string> list = Util.Split(sp.m_rs.GetScenarioTutorialText(3, 3, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], -1, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(3, 4, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 0, list, false, false, false, true);
-                sp.PlayBgmInScript("bgm02", 0f, 1f, -1, true);
-                sp.WaitText(50U, "test", true);
-                Plugin.CheckLocationsInScript(500);
-                sp.HideInterface(50U, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(3, 5, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list, true, false, false, true);
-                Plugin.CheckLocationsInScript(400);
-                sp.ShowChara(ad.targetP, 5, 0, 20U, false);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(3, 6, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, false, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(3, 7, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[3], ad.targetP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(3, 8, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, gd.personFromId[3], 0, list, false, false, false, true);
-            };
-            __instance.actions[2] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop4Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop4(TutorialLoop4Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[18];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                gd.GainHate(ad.mainP, 0.2f);
-                List<string> list16;
-                if (gd.chara[gd.personFromId[5]].doa == Setting.Doa.doa_Seizon)
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 72, 6), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[5], -1, 1, list16, true, false, false, true);
-                }
-                else
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 73, 1), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[2], -1, 1, list16, true, false, false, true);
-                }
-                if (gd.chara[gd.personFromId[1]].doa == Setting.Doa.doa_Seizon)
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 74, 5), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[1], -1, 2, list16, true, false, false, true);
-                }
-                else
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 75, 0), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[3], -1, 2, list16, true, false, false, true);
-                }
-                list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 76, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], -1, 0, list16, true, false, false, true);
-                Plugin.CheckLocationsInScript(1503);
-                if (gd.chara[gd.personFromId[2]].doa == Setting.Doa.doa_Seizon)
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 77, 4), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[2], gd.personFromId[4], 1, list16, true, false, false, true);
-                }
-                else
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 78, 2), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[3], gd.personFromId[4], 2, list16, true, false, false, true);
-                }
-                list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 79, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], -1, 0, list16, true, false, false, true);
-                int num5 = gd.personFromId[1];
-                if (gd.chara[gd.personFromId[3]].doa == Setting.Doa.doa_Seizon)
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 80, 5), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[3], gd.personFromId[4], 2, list16, true, false, false, true);
-                    num5 = gd.personFromId[3];
-                }
-                else
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 81, 0), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[1], gd.personFromId[4], 2, list16, true, false, false, true);
-                }
-                list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 82, 6), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], num5, 0, list16, true, false, false, true);
-                if (gd.chara[gd.personFromId[2]].doa == Setting.Doa.doa_Seizon)
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 83, 5), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[2], gd.personFromId[4], 1, list16, true, false, false, true);
-                    num5 = gd.personFromId[2];
-                }
-                else
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 84, 0), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[5], gd.personFromId[4], 1, list16, true, false, false, true);
-                    num5 = gd.personFromId[5];
-                }
-                list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 85, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], num5, 0, list16, false, false, false, true);
-                sp.WaitText(50U, "test", true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(4, 86, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.sce_all_flg = gd.baseData.sce_all_flg | 8UL;
-                    return true;
-                }, (float e) => sp.GetSelect(0) >= 0, false));
-                sp.HideInterface(50U, true);
-                list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 87, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], num5, 0, list16, true, true, false, true);
-                if (gd.chara[gd.personFromId[11]].doa == Setting.Doa.doa_Seizon)
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 88, 0), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[11], -1, 1, list16, false, false, false, true);
-                }
-                else
-                {
-                    list16 = Util.Split(sp.m_rs.GetScenarioTutorialText(4, 89, 0), new char[] { '|' });
-                    sp.SetNormalSerifu(gd.personFromId[2], -1, 1, list16, false, false, false, true);
-                }
-                sp.WaitText(50U, "test", true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(4, 90, -1), 2, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                sp.HideInterface(50U, true);
-                gd.pos = 1;
-                gd.forwardNext = true;
-                string text12 = list16[0];
-                list16[0] = text12;
-            };
-            __instance.actions[18] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop5Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop5(TutorialLoop5Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 3, 0), new char[] { '|' });
-                string text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.SetNormalSerifu(-3, 0, 1, list, true, true, true, true);
-                Plugin.CheckLocationsInScript(900);
-                sp.PlayBgmInScript("bgm00", 1f, 0.75f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 4, 0), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 1, list, true, false, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 5, 4), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], ad.mainP, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 6, 4), new char[] { '|' });
-                text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 7, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], ad.mainP, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 8, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[3], -1, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 9, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list, true, false, false, true);
-                sp.PlayBgmInScript("bgm01", 2.5f, 1f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 10, 5), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 1, list, true, false, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 11, 5), new char[] { '|' });
-                text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.SetNormalSerifu(gd.personFromId[11], 0, 0, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 12, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], 0, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 13, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, gd.personFromId[11], 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 14, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], ad.mainP, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 15, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, gd.personFromId[11], 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(5, 16, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], -1, 0, list, false, false, false, true);
-            };
-            __instance.actions[2] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop7Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop7(TutorialLoop7Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[7];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.UnloadTexture("ive005_0");
-                sp.UnloadTexture("ive005_0_1");
-                Plugin.CheckLocationsInScript(600);
-                List<string> list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 16, 0), new char[] { '|' });
-                string text3 = list6[0];
-                Util.Replace(ref text3, "{0}", gd.takashiName);
-                list6[0] = text3;
-                sp.SetNormalSerifu(ad.targetP, 0, 2, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 17, 0), new char[] { '|' });
-                text3 = list6[0];
-                Util.Replace(ref text3, "{0}", gd.takashiName);
-                list6[0] = text3;
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list6, false, true, true, true);
-                sp.WaitSec(0.4f, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(ad.mainP, 4, 0, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(0f, 60f, 600f, 337.5f), 0.4f, -2.5f, false, null, true);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 18, 0), new char[] { '|' });
-                Plugin.CheckLocationsInScript(800);
-                sp.SetNormalSerifu(ad.mainP, -1, 0, list6, true, true, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 19, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 2, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 20, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 0, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 21, 5), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 2, list6, true, false, false, true);
-                sp.ShowChara(ad.mainP, 6, 0, 20U, false);
-                sp.SetNormalClipAnim(-1);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 22, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 0, list6, true, true, true, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 23, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 2, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 24, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 0, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 25, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 0, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(7, 26, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, 2, list6, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.PlaySeInScript("se_ashioto_02", 0.7f);
-                sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 30U, 0.75f, 0, true, true, true);
-                sp.UnloadPlace();
-                sp.LoadPlace(5, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(255U, 50003U, -1);
-                    sp.m_sb[50003U].SetFade(0.75f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(uint.MaxValue, 50001U, -1);
-                    sp.SetScreen(Setting.Screen.s_PlaceName, 50002U, true, false, -1);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 50003U }, true, false);
-                gd.forwardNext = true;
-            };
-            __instance.actions[7] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop9Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop9(TutorialLoop9Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[3];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                ad.mainP = gd.personFromId[4];
-                gd.GainHate(ad.mainP, 0.2f);
-                gd.GainHate(ad.targetP, 0.2f);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.sce_all_flg = gd.baseData.sce_all_flg | 64UL;
-                    return true;
-                }, (float e) => true, false));
-                sp.FadeBgmInScript(0f, 0.6f, 2f, false, -1);
-                sp.PlaySeInScript("se_jin_05", 1f);
-                List<string> list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(9, 18, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list2, false, false, false, true);
-                sp.WaitText(50, "test", true);
-                sp.HideInterface(50, true);
-                Plugin.CheckLocationsInScript(1506);
-            };
-            __instance.actions[3] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop10Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop10(TutorialLoop10Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[2];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                gd.pos = 1;
-                List<string> list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 3, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 4, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, true, true, true);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.4f, 0, false, true, true);
-                sp.UnloadTexture("ive007_0");
-                sp.LoadTexture("ive007_1");
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, false, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ive007_1", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    sp.SetColorScreen(255U, 30U, -1);
-                    sp.m_sb[30U].SetFade(0.4f, 0f, 0, 1f, -1, false);
-                    return true;
-                }, (float e) => true, true));
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 5, -1), new char[] { '|' });
-                sp.SetNormalSerifu(-3, -1, -1, list, true, true, true, true);
-                Plugin.CheckLocationsInScript(1400);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 6, -1), new char[] { '|' });
-                sp.SetNormalSerifu(-3, -1, -1, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 7, -1), new char[] { '|' });
-                sp.SetNormalSerifu(-3, -1, -1, list, true, true, true, true);
-                sp.FadeBgmInScript(-1f, 0.4f, 1f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 8, -1), new char[] { '|' });
-                sp.SetNormalSerifu(-3, -1, -1, list, true, true, true, true);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.4f, 4, false, true, true);
-                sp.UnloadTexture("ive007_1");
-                sp.LoadTexture("ive007_2");
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(255U, 30U, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.SetFadeScreen(new List<uint> { 30U }, 31U, 0.4f, 4, false, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.m_sb[31U].SetAlphaCoeff(1f);
-                    return true;
-                }, (float e) => true, true));
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, false, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ive007_2", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.ShowChara(sd.mainP, 0, 1, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 20U }, new Vector4(120f, 40f, 720f, 405f), 0f, 1f, true, null, true);
-                sp.WaitFade(new List<uint> { 31U }, true, true);
-                sp.WaitSec(0.25f, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 9, -1), new char[] { '|' });
-                string text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.SetNormalSerifu(sd.mainP, 0, 1, list, true, true, true, true);
-                Plugin.CheckLocationsInScript(1000);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 10, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, false, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 11, 6), new char[] { '|' });
-                text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.SetNormalSerifu(sd.mainP, 0, 1, list, true, false, false, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.4f, 2, false, true, true);
-                sp.LoadTexture("ive007_2_1");
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(255U, 30U, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.SetFadeScreen(new List<uint> { 30U }, 31U, 0.4f, 2, false, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 10U, false, false, -1);
-                    sp.m_sb[10U].SetTexture(0, sp.m_sb[10U].gameObject.transform, 0U, "ive007_2", null, null);
-                    sp.m_sb[10U].m_spriteMap[0U].SetVisible(true);
-                    sp.SetScreen(Setting.Screen.s_none, 20U, false, false, -1);
-                    sp.m_sb[10U].SetTexture(0, sp.m_sb[10U].gameObject.transform, 1U, "ive007_2_1", new Vector2?(new Vector2(267.75f, 0f)), null);
-                    sp.m_sb[10U].m_spriteMap[1U].SetVisible(true);
-                    return true;
-                }, (float e) => true, true));
-                sp.FadeBgmInScript(-1f, 0.75f, 0.4f, false, -1);
-                sp.LoadTexture("ive007_3");
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 31U }, true, true);
-                sp.WaitSec(0.25f, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 12, -1), new char[] { '|' });
-                sp.SetNormalSerifu(sd.targetP, -1, 1, list, true, true, true, true);
-                sp.FadeBgmInScript(-1f, 1f, 1.2f, false, -1);
-                sp.SetFadeScreen(new List<uint> { 10U, 20U }, 30U, 0.4f, 6, false, true, true);
-                sp.UnloadTexture("ive007_2");
-                sp.UnloadTexture("ive007_2_1");
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, false, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ive007_3", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    return true;
-                }, (float e) => true, true));
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 13, -1), new char[] { '|' });
-                sp.SetNormalSerifu(sd.targetP, -1, 1, list, true, true, true, true);
-                sp.WaitSec(0.6f, true);
-                sp.FadeBgmInScript(0.4f, 0f, 0.4f, true, -1);
-                sp.PlaySeInScript("se_gatyan", 1f);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.1f, 0, false, true, true);
-                sp.UnloadTexture("ive007_3");
-                sp.LoadTexture("p14a");
-                sp.WaitLoad();
-                sp.LoadPlace(12, true);
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_none, 18U, false, false, -1);
-                    uint num3 = 14U;
-                    sp.m_sb[18U].SetPackedTexture(0, sp.m_sb[18U].gameObject.transform, "p14a", "body", 100U * num3, 10U, new Vector2?(new Vector2((float)(18446744073709551416UL + (ulong)(50U * num3)), 0f)), null, null, false);
-                    sp.m_sb[18U].m_spriteMap[100U * num3].SetSize(0.7f);
-                    sp.m_sb[18U].m_spriteMap[100U * num3].SetDisplayOffsetY((float)sp.m_rs.m_displaySize.height - sp.m_sb[18U].m_spriteMap[100U * num3].GetSizeInDisplay().y * sp.m_sb[18U].m_spriteMap[100U * num3].GetSize() * GraphicsContext.m_textureRatio);
-                    sp.SetScreen(Setting.Screen.s_Chara, 20U, true, false, -1);
-                    sp.SetColorScreen(255U, 30U, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.ShowChara(sd.targetP, 4, 1, 18U, false);
-                sp.WaitSec(0.8f, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_LeviMes, 35U, true, false, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.SetFadeScreen(new List<uint> { 30U }, 31U, 0.8f, 0, false, true, true);
-                sp.WaitFade(new List<uint> { 31U }, true, true);
-                sp.WaitSec(0.2f, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 14, -1), new char[] { '|' });
-                sp.SetNormalSerifu(-2, -1, -1, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 15, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 16, -1), new char[] { '|' });
-                sp.SetFadeScreen(new List<uint> { 0U, 18U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(18U, -1);
-                sp.ShowChara(sd.mainP, 3, 2, 20U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 18U, 20U }, new Vector4((float)sp.m_rs.m_displaySize.width * 0.25f * 2f, 80f, (float)sp.m_rs.m_displaySize.width * 0.5f, (float)sp.m_rs.m_displaySize.height * 0.5f), 0.4f, -2.5f, false, null, true);
-                sp.WaitClipAnim(new List<uint> { 0U, 18U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.SetInterface(50U, sd.mainP, 0, true, true);
-                sp.SetText(list[0], false, 50U, "test");
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(sd.targetP, (gd.chara[sd.targetP].i_yaku == Setting.Yakuwari.y_Jinro) ? 1 : 0, 1, 18U, false);
-                sp.SetClipAnim(new List<uint> { 0U, 18U }, new Vector4((float)sp.m_rs.m_displaySize.width * 0.25f * 1f, 80f, (float)sp.m_rs.m_displaySize.width * 0.5f, (float)sp.m_rs.m_displaySize.height * 0.5f), 0.4f, -2.5f, false, null, true);
-                sp.WaitClipAnim(new List<uint> { 0U, 18U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.WaitSec(0.6f, true);
-                sp.RemoveScreenInScript(35U);
-                sp.SetFadeScreen(new List<uint> { 0U, 18U, 20U }, 30U, 1.2f, 0, false, true, true);
-                sp.WaitSec(0.6f, true);
-                sp.PlaySeInScript("se_ashioto_02", 0.7f);
-                sp.UnloadPlace();
-                sp.UnloadTexture("p14a");
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[2] = action;
-            action = __instance.actions[9];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Get Other Stuff
-                Type dataType = AccessTools.TypeByName("gnosia.Data");
-                Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
-                //Base
-                int pos = gd.pos;
-                if (ad.mainP == 0)
-                {
-                    ad.mainP = sd.mainP;
-                }
-                GameData.character character2 = gd.chara[ad.mainP];
-                Jinro.ClearTable(ref character2.p_knowTable);
-                Jinro.IsY((Setting.Yakuwari)ad.type, ad.mainP, ref character2.p_knowTable);
-                for (int j = 1; j <= 5; j++)
-                {
-                    if (j != ad.type)
-                    {
-                        Jinro.IsNotY((Setting.Yakuwari)j, ad.mainP, ref gd.knowTable);
-                    }
-                }
-                character2.p_yaku = (Setting.Yakuwari)ad.type;
-                Jinro.MakeYakuAliveNum(ref gd);
-                gd.chara[ad.mainP] = character2;
-                ad.ctuizuiP = Jinro.MakeFakeRireki(ad.mainP, (Setting.Yakuwari)ad.type, ref gd);
-                gd.peopleFlg[6] = (ushort)((int)gd.peopleFlg[6] | (1 << ad.mainP));
-                gd.makeRate = true;
-                gd.GainHate(ad.mainP, 0.2f);
-                sp.FadeBgmInScript(-1f, 0.5f, 0.8f, false, -1);
-                List<string> list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 35, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, gd.pos, list6, true, false, false, true);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 36, 0), new char[] { '|' });
-                string text2 = list6[0];
-                Util.Replace(ref text2, "{0}", GetCharaName(chara, gd, ad.targetP));
-                list6[0] = text2;
-                sp.SetNormalSerifu(ad.mainP, -1, gd.pos, list6, true, true, true, true);
-                int num5 = -1;
-                if (((long)(gd.peopleFlg[0] & ~gd.peopleFlg[6]) & (long)(1UL << (gd.personFromId[2] & 31))) > 0L)
-                {
-                    num5 = 2;
-                    list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 37, 5), new char[] { '|' });
-                }
-                else if (((long)(gd.peopleFlg[0] & ~gd.peopleFlg[6]) & (long)(1UL << (gd.personFromId[3] & 31))) > 0L)
-                {
-                    num5 = 3;
-                    list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 38, 0), new char[] { '|' });
-                }
-                else if (((long)(gd.peopleFlg[0] & ~gd.peopleFlg[6]) & (long)(1UL << (gd.personFromId[5] & 31))) > 0L)
-                {
-                    num5 = 5;
-                    list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 39, 6), new char[] { '|' });
-                }
-                else if (((long)(gd.peopleFlg[0] & ~gd.peopleFlg[6]) & (long)(1UL << (gd.personFromId[8] & 31))) > 0L)
-                {
-                    num5 = 8;
-                    list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 40, 5), new char[] { '|' });
-                }
-                if (num5 > 0)
-                {
-                    gd.peopleFlg[6] = (ushort)((int)gd.peopleFlg[6] | (1 << gd.personFromId[num5]));
-                    sp.SetNormalSerifu(gd.personFromId[num5], ad.mainP, gd.GetNextPos(), list6, true, false, false, true);
-                }
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.sce_all_flg = gd.baseData.sce_all_flg | 4UL;
-                    return true;
-                }, (float e) => true, false));
-                sp.FadeBgmInScript(0f, 0.5f, 2f, false, -1);
-                sp.PlaySeInScript("se_jin_01", 1f);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(10, 41, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, gd.personFromId[num5], pos, list6, false, false, false, true);
-                gd.pos = pos;
-                sp.WaitText(50U, "test", true);
-                Plugin.CheckLocationsInScript(1502);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(10, 42, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                sp.HideInterface(50U, true);
-                gd.forwardNext = true;
-            };
-            __instance.actions[9] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop11Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop11(TutorialLoop11Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[4];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list3;
-                if (ad.mainP == 0)
-                {
-                    list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 9, -1), new char[] { '|' });
-                    sp.SetNormalSerifu(0, ad.targetP, 1, list3, true, false, true, true);
-                }
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 10, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, false, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 11, 1), new char[] { '|' });
-                string text3 = list3[0];
-                Util.Replace(ref text3, "{0}", gd.takashiName);
-                list3[0] = text3;
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, true, false, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 12, 0), new char[] { '|' });
-                sp.SetNormalSerifu(0, ad.targetP, 1, list3, false, false, false, true);
-                sp.LoadTexture("ivep03_01_0");
-                sp.WaitLoad();
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(uint.MaxValue, 50001U, -1);
-                    sp.m_sb[50001U].SetFadeIn(0.3f, 0);
-                    sp.SetScreen(Setting.Screen.s_LightBall, 45U, false, false, -1);
-                    return true;
-                }, (float e) => true, true));
-                sp.PlaySeInScript("se_hikaruball", 1f);
-                sp.FadeBgmInScript(-1f, 0.7f, 1f, false, -1);
-                sp.WaitFade(new List<uint> { 50001U }, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 32U, false, false, -1);
-                    sp.m_sb[32U].SetTexture(0, sp.m_sb[32U].gameObject.transform, 0U, "ivep03_01_0", null, null);
-                    sp.m_sb[32U].m_spriteMap[0U].SetVisible(true);
-                    return true;
-                }, (float e) => true, true));
-                sp.SetFadeScreen(new List<uint> { 50001U }, 50002U, 1f, 0, true, true, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 13, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, true, false, true);
-                sp.PlaySeInScript("se_hikaruball", 1f);
-                sp.FadeBgmInScript(-1f, 1f, 1f, false, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.4f, 0, false, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(uint.MaxValue, 35U, -1);
-                    sp.m_sb[35U].SetFadeIn(0.4f, 0);
-                    return true;
-                }, (float e) => true, false));
-                sp.UnloadPlace();
-                sp.LoadTexture("ive00_1");
-                sp.WaitLoad();
-                sp.LoadTexture("ive008_0_1");
-                sp.WaitLoad();
-                sp.LoadTexture("ive008_0_2");
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 35U }, false, true);
-                sp.RemoveScreenInScript(32U);
-                sp.UnloadTexture("ivep03_01_0");
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, false, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ive00_1", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    return true;
-                }, (float e) => true, false));
-                sp.SetFadeScreen(new List<uint> { 35U }, 36U, 1.2f, 0, true, true, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 14, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, true, true, true, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.FadeBgmInScript(-1f, 1f, 1f, false, -1);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(sp.m_rs.defColor_blueScr, 41U, -1);
-                    sp.m_sb[41U].SetAlphaCoeff(0f);
-                    sp.m_sb[41U].SetFade(0.35f, 0.4f, 0, 0f, -1, false);
-                    sp.SetScreen(Setting.Screen.s_none, 42U, false, false, -1);
-                    TextArea textArea = UnityEngine.Object.Instantiate<TextArea>(sp.m_rs.textAreaPrefab, sp.m_sb[42U].gameObject.transform);
-                    textArea.name = "listTextArea";
-                    sp.m_sb[42U].SetTextArea(textArea, "list", 38, 20, 28, new Vector2(480f, 0f), 5, 0, sp.m_rs.m_defaultFont, TextAlign.k_text_Center, null);
-                    sp.m_sb[42U].m_textAreaMap["list"].SetSize(0.5f);
-                    return true;
-                }, (float e) => true, false));
-                sp.SetClipAnim(new List<uint> { 41U, 42U }, new Vector4(0f, 0f, (float)sp.m_rs.m_displaySize.width, (float)sp.m_rs.m_displaySize.height), 0.35f, -4f, false, new Vector4?(new Vector4(0f, -30000f, (float)sp.m_rs.m_displaySize.width, (float)(sp.m_rs.m_displaySize.height + 60000))), false);
-                sp.SetText("RL:E nm:11 g:2 E D A K\nst,gn,sq,jn,kk,nn,sg,sm,yr,lv,rc\nD1:CO_E st gn jn,CS rc,DEL kk\nD2:CO_D sm,WH yr,CS gn,DEL sg\nD3:CS lv,DEL st\n---------------Loop158---------------\nRL:N nm:6 g:1 E\nst,gn,sq,lv,sg,rc\nD1:CS rc,DEL gn\nD2:CO_E sg,WH st,CS sq\n---------------Loop159---------------\nRL:E nm:15 g:2 E D A K W\nst,gn,sq,jn,kk,nn,sg,sm,yr,lv,rc,cp,rn\nD1:CO_E yr sq,CO_W sg jn,CS sm,DEL sg\nD2:CS rn,DEL jn\nD3:CO_D nn,BL sq,CS sq,DEL nn\nD4:CS lv,DEL st\n---------------Loop160---------------\nRL:G nm:11 g:2 E D A K\nst,gn,sq,jn,kk,nn,sg,lv,rc,cp,cm\nD1:\n", false, 42U, "list");
-                sp.WaitClipAnim(new List<uint> { 41U, 42U }, false);
-                sp.WaitSec(0.6f, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(11, 16, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, 0, 1, list3, false, true, true, true);
-                sp.WaitText(50U, "test", false);
-                List<long> locationIds = new List<long>();
-                for (int j = 1; j < (int)gd.baseData.totalNum; j++)
-                {
-                    int id = gd.chara[j].id;
-                    locationIds.Add(id * 100 + 1);
-                }
-                Plugin.CheckLocationsInScript(locationIds.ToArray());
-            };
-            __instance.actions[4] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop14Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop12(TutorialLoop14Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[13];
-            action.FinAtHere = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.WaitSec(0.1f, false);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 60U, 0.8f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.UnloadTexture("p11a");
-                sp.WaitSec(0.2f, true);
-                sp.PlaySeInScript("se_ashioto_03", 0.7f);
-                sp.WaitFade(new List<uint> { 60U }, true, true);
-                sp.WaitSec(1f, true);
-                int targetP = ad.targetP;
-                Plugin.CheckLocationsInScript(1301);
-                sp.WaitSec(0.4f, true);
-                gd.SetState(28, ref sd);
-                gd.forwardNext = true;
-            };
-            __instance.actions[13] = action;
-            action = __instance.actions[3];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.WaitSec(0.5f, true);
-                gd.pos = 1;
-                sp.PlayBgmInScript("bgm01", 0f, 1f, -1, true);
-                List<string> list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 4, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[10], -1, 1, list, true, true, true, true);
-                sp.FadeBgmInScript(-1f, 0f, 2f, true, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 5, 0), new char[] { '|' });
-                sp.SetNormalSerifu(-3, gd.personFromId[10], 1, list, true, false, true, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(sd.counterP, 5, 2, 20U, false);
-                sp.SetNormalClipAnim(2);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 6, 5), new char[] { '|' });
-                sp.SetNormalSerifu(-3, gd.personFromId[10], 2, list, false, true, true, true);
-                sp.WaitSec(0.2f, true);
-                sp.PlayBgmInScript("bgm02", 0f, 1f, -1, true);
-                sp.WaitText(50U, "test", true);
-                sp.HideInterface(50U, true);
-                Plugin.CheckLocationsInScript(1200);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 7, 4), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[8], sd.counterP, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 8, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[3], sd.counterP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 9, 3), new char[] { '|' });
-                sp.SetNormalSerifu(sd.counterP, gd.personFromId[3], 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 10, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 11, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 12, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[1], -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 13, 6), new char[] { '|' });
-                sp.SetNormalSerifu(sd.counterP, gd.personFromId[1], 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 14, 3), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[10], -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 15, 4), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[3], -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 16, 4), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[2], gd.personFromId[5], 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 17, 2), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[5], -1, 1, list, true, false, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_LeviMes, 35U, true, false, -1);
-                    return true;
-                }, (float e) => true, true));
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 18, -1), new char[] { '|' });
-                sp.SetNormalSerifu(-2, -1, -1, list, true, false, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 19, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[6], -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 20, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], -1, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 21, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, false, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 22, 6), new char[] { '|' });
-                sp.SetNormalSerifu(sd.counterP, -1, 2, list, false, false, false, true);
-            };
-            __instance.actions[3] = action;
-            action = __instance.actions[10];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.WaitSec(0.05f, false);
-                sp.PlaySeInScript("se_ashioto_02", 0.7f);
-                sp.FadeBgmInScript(-1f, 0f, 1.2f, true, -1);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U, 50U }, 30U, 0.75f, 4, true, true, true);
-                sp.UnloadPlace();
-                sp.UnloadTexture("p11a");
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(255U, 50003U, -1);
-                    sp.m_sb[50003U].SetFade(0.75f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.place = 16;
-                    sp.SetColorScreen(uint.MaxValue, 50001U, -1);
-                    sp.SetScreen(Setting.Screen.s_PlaceName, 50002U, true, false, -1);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitLoad();
-                sp.WaitFade(new List<uint> { 50003U }, true, false);
-                sp.StopAllSeInScript();
-                sp.PlaySeInScript("se_jidoudoa", 1f);
-                sp.LoadTexture("ive009_1_0");
-                sp.WaitLoad();
-                sp.LoadTexture("ive009_1_1");
-                sp.WaitLoad();
-                sp.LoadTexture("ive009_1_2");
-                sp.WaitLoad();
-                sp.LoadTexture("ive009_0");
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    sp.m_sb[50001U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    sp.m_sb[50002U].SetFade(0.3f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, true));
-                sp.WaitFade(new List<uint> { 50001U, 50002U }, true, true);
-                List<string> list7 = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 39, -1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, -1, -1, list7, true, true, true, true);
-                sp.WaitLoad();
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, false, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ive009_0", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    sp.SetColorScreen(255U, 40U, -1);
-                    return true;
-                }, (float e) => true, false));
-                sp.SetClipAnim(new List<uint> { 0U }, new Vector4(0f, 0f, 960f, 540f), 3.2f, 1f, false, new Vector4?(new Vector4(0f, 422f, 960f, 540f)), true);
-                sp.SetFadeScreen(new List<uint> { 40U }, 41U, 0.6f, 0, false, true, true);
-                sp.WaitFade(new List<uint> { 41U }, true, true);
-                sp.PlayBgmInScript("bgm15", 0f, 1f, -1, true);
-                sp.WaitSec(1f, true);
-                list7 = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 40, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list7, false, true, true, false);
-                sp.WaitSec(0.4f, false);
-                sp.WaitText(50U, "test", true);
-                Plugin.CheckLocationsInScript(1300);
-                sp.HideInterface(50U, true);
-                sp.FadeBgmInScript(-1f, 0.7f, 1.5f, false, -1);
-                list7 = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 41, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 2, list7, true, true, true, false);
-                sp.SetFadeScreen(new List<uint> { 0U }, 30U, 0.4f, 6, false, true, true);
-                sp.UnloadTexture("ive009_0");
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_none, 0U, false, false, -1);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 0U, "ive009_1_0", null, null);
-                    sp.m_sb[0U].m_spriteMap[0U].SetVisible(true);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 1U, "ive009_1_1", new Vector2?(new Vector2(419.25f, 65.25f)), null);
-                    sp.m_sb[0U].SetTexture(0, sp.m_sb[0U].gameObject.transform, 2U, "ive009_1_2", new Vector2?(new Vector2(419.25f, 65.25f)), null);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list7 = Util.Split(sp.m_rs.GetScenarioTutorialText(12, 42, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.targetP, ad.mainP, 1, list7, false, true, true, false);
-            };
-            __instance.actions[10] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop17Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void TutorialLoop13(TutorialLoop17Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[3];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.PlayBgmInScript("bgm10", 0f, 1f, -1, true);
-                sp.WaitSec(0.5f, true);
-                gd.pos = 1;
-                List<string> list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 4, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[9], -1, 1, list, true, true, true, true);
-                sp.FadeBgmInScript(-1f, 0.5f, 0.6f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 5, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, -1, list, true, false, true, true);
-                sp.FadeBgmInScript(-1f, 0.75f, 0.6f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 6, 6), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[9], -1, 1, list, true, false, false, true);
-                sp.PlayBgmInScript("bgm02", 0.75f, 1f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 7, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[13], gd.personFromId[9], 2, list, true, false, false, true);
-                sp.PlayBgmInScript("bgm10", 0.4f, 1f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 8, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[9], gd.personFromId[13], 1, list, true, false, false, true);
-                sp.FadeBgmInScript(-1f, 0.5f, 0.6f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 9, 3), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[14], -1, 0, list, true, false, false, true);
-                sp.PlayBgmInScript("bgm03", 1.4f, 0.85f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 10, 3), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[10], -1, 1, list, true, false, false, true);
-                sp.FadeBgmInScript(-1f, 0.25f, 0.8f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 11, 4), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[10], -1, 1, list, true, true, false, true);
-                sp.SetFadeScreen(new List<uint> { 0U, 20U }, 30U, 0.25f, 0, false, false, true);
-                sp.UnvisibleAllChara(20U, -1);
-                sp.ShowChara(sd.targetP, 5, 2, 20U, false);
-                sp.SetNormalClipAnim(2);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.WaitFade(new List<uint> { 30U }, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 12, 5), new char[] { '|' });
-                sp.SetNormalSerifu(-3, gd.personFromId[10], 2, list, true, true, true, true);
-                Plugin.CheckLocationsInScript(700);
-                sp.FadeBgmInScript(-1f, 0.85f, 1.5f, false, -1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 13, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], gd.personFromId[10], 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 14, 0), new char[] { '|' });
-                sp.SetNormalSerifu(sd.targetP, gd.personFromId[4], 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 15, 3), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[3], sd.targetP, 1, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 16, 6), new char[] { '|' });
-                sp.SetNormalSerifu(sd.targetP, gd.personFromId[3], 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 17, 3), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[1], sd.targetP, 0, list, true, false, false, true);
-                sp.SetNormalClipAnim(-1);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 18, -1), new char[] { '|' });
-                string text = list[0];
-                Util.Replace(ref text, "{0}", gd.takashiName);
-                list[0] = text;
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                sp.SetNormalSerifu(gd.personFromId[11], 0, -1, list, true, true, true, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 19, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], 0, 2, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 20, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[11], 0, 2, list, true, true, false, true);
-                sp.PlayBgmInScript("bgm01", 3.5f, 1f, -1, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 21, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[6], -1, 0, list, true, false, false, true);
-                list = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 22, 0), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[9], -1, 1, list, true, false, false, true);
-                sp.WaitSec(0.05f, false);
-                sp.SetNormalClipAnim(-1);
-                sp.WaitClipAnim(new List<uint> { 0U, 20U }, true);
-                Plugin.CheckLocationsInScript(901);
-                gd.forwardNext = true;
-            };
-            __instance.actions[3] = action;
-            action = __instance.actions[4];
-            action.DoIt = delegate(ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                ad.mainP = gd.personFromId[9];
-                GameData.character character3 = gd.chara[ad.mainP];
-                Jinro.ClearTable(ref character3.p_knowTable);
-                Jinro.IsY((Setting.Yakuwari)ad.type, ad.mainP, ref character3.p_knowTable);
-                for (int k = 1; k <= 5; k++)
-                {
-                    if (k != ad.type)
-                    {
-                        Jinro.IsNotY((Setting.Yakuwari)k, ad.mainP, ref gd.knowTable);
-                    }
-                }
-                character3.p_yaku = (Setting.Yakuwari)ad.type;
-                gd.chara[ad.mainP] = character3;
-                Jinro.MakeYakuAliveNum(ref gd);
-                gd.GainHate(ad.mainP, 0.1f);
-                sp.FadeBgmInScript(-1f, 0.55f, 1.2f, false, -1);
-                List<string> list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 25, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 26, 2), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[3], ad.mainP, 2, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 27, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, false, false, true);
-                if (gd.chara[gd.personFromId[2]].i_yaku == Setting.Yakuwari.y_Jinro)
-                {
-                    list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 28, 6), new char[] { '|' });
-                }
-                else
-                {
-                    list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 29, 6), new char[] { '|' });
-                }
-                sp.SetNormalSerifu(gd.personFromId[2], ad.mainP, 0, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 30, 5), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[4], -1, 2, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 31, 4), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, false, false, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    gd.baseData.sce_all_flg = gd.baseData.sce_all_flg | 16UL;
-                    return true;
-                }, (float e) => true, false));
-                sp.FadeBgmInScript(0f, 0.55f, 2f, false, -1);
-                sp.PlaySeInScript("se_jin_01", 1f);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 32, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, -1, 1, list2, true, false, false, true);
-                Plugin.CheckLocationsInScript(1504);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 33, 1), new char[] { '|' });
-                sp.SetNormalSerifu(gd.personFromId[10], ad.mainP, 0, list2, true, false, false, true);
-                list2 = Util.Split(sp.m_rs.GetScenarioTutorialText(13, 34, 2), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, gd.personFromId[7], 1, list2, false, false, false, true);
-            };
-            __instance.actions[4] = action;
-            action = __instance.actions[11];
-            action.FinAtHere = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.WaitSec(0.05f, false);
-                sp.SetFadeScreen(new List<uint> { 50U }, 60U, 0.25f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitFade(new List<uint> { 60U }, true, true);
-                int mainP = sd.mainP;
-                int targetP = sd.targetP;
-                Plugin.CheckLocationsInScript(1201, 701);
-                sp.WaitSec(0.75f, true);
-                gd.SetState(21, ref sd);
-                gd.forwardNext = true;
-            };
-            __instance.actions[11] = action;
-            action = __instance.actions[12];
-            action.FinAtHere = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.FadeBgmInScript(-1f, 0f, 1.5f, true, -1);
-                sp.WaitSec(0.05f, false);
-                sp.SetFadeScreen(new List<uint> { 50U }, 60U, 0.25f, 0, false, true, true);
-                sp.UnloadPlace();
-                sp.WaitFade(new List<uint> { 60U }, true, true);
-                int mainP = sd.mainP;
-                int targetP = sd.targetP;
-                Plugin.CheckLocationsInScript(1201, 701);
-                sp.WaitSec(0.75f, true);
-                gd.SetState(21, ref sd);
-                gd.forwardNext = true;
-            };
-            __instance.actions[12] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialLoop19Scenario), "SetParam")]
-        [HarmonyPostfix]
-        static void BugLoop(TutorialLoop19Scenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[7];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                sp.LoadPlace(5, true);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetColorScreen(uint.MaxValue, 50001U, -1);
-                    sp.SetScreen(Setting.Screen.s_PlaceName, 50002U, true, false, -1);
-                    sp.m_sb[50001U].SetFade(0.3f, 1f, 0, 0f, -1, false);
-                    sp.m_sb[50002U].SetFade(0.3f, 1f, 0, 0f, -1, false);
-                    return true;
-                }, (float e) => true, false));
-                sp.WaitFade(new List<uint> { 50001U, 50002U }, false, true);
-                sp.WaitLoad();
-                sp.PlayBgmInScript("bgm01", 1.2f, 1f, -1, true);
-                sp.WaitSec(0.6f, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.SetScreen(Setting.Screen.s_BG, 0U, true, false, -1);
-                    sp.SetScreen(Setting.Screen.s_Interface, 50U, true, false, -1);
-                    sp.m_sb[50001U].SetFade(1f, 0f, 0, -1f, -1, false);
-                    sp.m_sb[50002U].SetFade(1f, 0f, 0, -1f, -1, false);
-                    return true;
-                }, (float e) => true, true));
-                sp.WaitFade(new List<uint> { 50001U, 50002U }, true, true);
-                List<string> list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(14, 21, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 1, list3, true, true, true, true);
-                sp.PlayBgmInScript("bgm19", 0f, 0.6f, -1, true);
-                sp.FadeBgmInScript(-1f, 1f, 3f, false, -1);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script(delegate (float e)
-                {
-                    sp.m_sb[0U].SetFade(10f, 0f, 101, 1f, 0, false);
-                    return true;
-                }, (float e) => true, true));
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(14, 22, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 1, list3, true, true, true, true);
-                list3 = Util.Split(sp.m_rs.GetScenarioTutorialText(14, 23, -1), new char[] { '|' });
-                sp.SetNormalSerifu(0, -1, 1, list3, true, true, true, true);
-                sp.WaitFade(new List<uint> { 0U }, true, true);
-                sp.RemoveScreenInScript(50U);
-                sp.UnloadPlace();
-                sp.FadeBgmInScript(-1f, 0.3f, 1.5f, false, -1);
-                sp.WaitSec(0.5f, true);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(14, 24, -1), 2, false);
-                Plugin.CheckLocationsInScript(1508);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(14, 25, -1), 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                sp.WaitSec(0.5f, true);
-                sp.FadeBgmInScript(-1f, 1f, 0.4f, false, -1);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(14, 26, -1), 1, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                gd.forwardNext = true;
-            };
-            __instance.actions[7] = action;
-        }
-
-
-        [HarmonyPatch(typeof(TutorialNanoriScenario), "SetParam")]
-        [HarmonyPostfix]
-        static void StepForward(TutorialNanoriScenario __instance)
-        {
-            ScenarioContents.ActionContents action = __instance.actions[6];
-            action.DoIt = delegate (ref gnosia.GameData.scenarioData sd, ref gnosia.GameData.actionData ad)
-            {
-                //Get gd and sp
-                gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
-                ScriptParser sp = GameObject.Find("Application").GetComponent<ScriptParser>();
-                //Base
-                List<string> list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(15, 21, 7), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list6, true, true, false, false);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(15, 22, 3), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list6, true, true, false, false);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(15, 23, 0), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list6, true, true, false, false);
-                sp.WaitSec(0.05f, false);
-                Plugin.CheckLocationsInScript(1);
-                sp.PlaySeInScript("se_square", 1f);
-                sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(15, 27, -1), (Setting.language == 1) ? 2 : 3, false);
-                sp.scriptQueue.Enqueue(new ScriptParser.Script((float e) => true, (float e) => sp.GetSelect(0) >= 0, false));
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(15, 28, 6), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list6, true, true, false, false);
-                list6 = Util.Split(sp.m_rs.GetScenarioTutorialText(15, 29, 1), new char[] { '|' });
-                sp.SetNormalSerifu(ad.mainP, ad.targetP, 1, list6, false, true, false, false);
-            };
-            __instance.actions[6] = action;
         }
     }
 }

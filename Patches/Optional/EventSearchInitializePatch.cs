@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using gnosia;
-using util;
+using GnosiaArchipelagoRandomizer.Archipelago;
 using HarmonyLib;
 using UnityEngine;
-using GnosiaArchipelagoRandomizer.Archipelago;
+using util;
 
-namespace GnosiaArchipelagoRandomizer.Patches.Core
+namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
     [HarmonyPatch(typeof(SearchScenario), "Initialize")]
     class EventSearchInitializePatch

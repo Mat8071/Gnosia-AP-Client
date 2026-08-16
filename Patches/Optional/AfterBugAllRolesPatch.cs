@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using HarmonyLib;
+﻿using HarmonyLib;
 
-namespace GnosiaArchipelagoRandomizer.Patches.Core
+namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
     [HarmonyPatch(typeof(gnosia.GameData), "MakeLoop")]
     class AfterBugAllRolesPatch

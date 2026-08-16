@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Archipelago.MultiClient.Net;
@@ -7,15 +6,13 @@ using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.MessageLog.Messages;
+using Archipelago.MultiClient.Net.Models;
 using Archipelago.MultiClient.Net.Packets;
+using coreSystem;
+using GnosiaArchipelagoRandomizer.Patches.Optional;
 using GnosiaArchipelagoRandomizer.Utils;
 using HarmonyLib;
 using UnityEngine;
-using GnosiaArchipelagoRandomizer.Patches.Optional;
-using Archipelago.MultiClient.Net.Models;
-using HarmonyLib.Tools;
-using gnosia;
-using coreSystem;
 
 namespace GnosiaArchipelagoRandomizer.Archipelago
 {
@@ -131,30 +128,116 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                 //We need to get the settings before starting the title screen or the patches won't apply
                 try
                 {
-                    //Get settings
-                    Dictionary<string, object> slotData = ServerData.GetSlotData();
-                    if (slotData["death_link"] != null)
-                        enableDeathLink = Convert.ToBoolean(slotData["death_link"]);
+                    //Get Slot Data
+                    var slotData = ServerData.SlotData;
+                    CheckVersionCompatibility(slotData.Version);
+                    var options = slotData.Options;
+                    enableDeathLink = options?.DeathLink ?? false;
 
                     //Apply optional patches (except Death Link)
                     var harmony = new Harmony(Plugin.PluginGUID + ".optional");
-                    if (Convert.ToBoolean(slotData["randomize_character_unlocks"]))
+                    bool achievementsPatchAlreadyApplied = false;
+                    //Apply Location Patches
+                    if ((options?.RandomizeNotes ?? true) || (options?.RandomizeSkills ?? true))
+                    {
+                        harmony.CreateClassProcessor(typeof(MixedLocationsPatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("MixedLocationsPatch Applied!");
+                    }
+                    if (options?.RandomizeNotes ?? true)
+                    {
+                        harmony.CreateClassProcessor(typeof(NoteLocationsPatch)).Patch();
+                        harmony.CreateClassProcessor(typeof(EventSearchInitializePatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("NoteLocationsPatch Applied!");
+                        Plugin.BepinLogger.LogInfo("EventSearchInitializePatch Applied!");
+                    }
+                    if (options?.RandomizeSkills ?? true)
+                    {
+                        harmony.CreateClassProcessor(typeof(NextDayPatch)).Patch();
+                        harmony.CreateClassProcessor(typeof(SkillLocationsPatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("NextDayPatch Applied!");
+                        Plugin.BepinLogger.LogInfo("SkillLocationsPatch Applied!");
+                    }
+                    if (options?.AddRoleAchievementLocations ?? false)
+                    {
+                        harmony.CreateClassProcessor(typeof(HandleAchievementsPatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("HandleAchievementsPatch Applied!");
+                        achievementsPatchAlreadyApplied = true;
+                    }
+                    if ((options?.AddWinWithCharacterLocations ?? false) ||
+                        (options?.AddWinAgainstCharacterLocations ?? false) ||
+                        (options?.AddWinAsRoleLocations ?? false) ||
+                        (options?.AddWinAgainstRoleLocations ?? false))
+                    {
+                        harmony.CreateClassProcessor(typeof(WinLocationsPatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("WinLocationsPatch Applied!");
+                    }
+                    //Apply direct setting-based patches
+                    if (options?.RandomizeCharacterUnlocks ?? false)
                     {
                         harmony.CreateClassProcessor(typeof(CharacterRandomizerPatch)).Patch();
                         Plugin.BepinLogger.LogInfo("CharacterRandomizerPatch Applied!");
                     }
-                    if (Convert.ToBoolean(slotData["allow_gender_specific_logic"]))
+                    if ((options?.ExpMultiplier ?? 1) != 1)
+                    {
+                        harmony.CreateClassProcessor(typeof(ExpMultiplierPatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("ExpMultiplierPatch Applied!");
+                    }
+                    if (options?.AllowGenderSpecificLogic ?? false)
                     {
                         harmony.CreateClassProcessor(typeof(MoreRespecPatch)).Patch();
                         harmony.CreateClassProcessor(typeof(ReCharacterCreationPatch)).Patch();
                         Plugin.BepinLogger.LogInfo("MoreRespecPatch Applied!");
+                        Plugin.BepinLogger.LogInfo("ReCharacterCreationPatch Applied!");
                     }
-                    switch (Convert.ToInt64(slotData["goal"]))
+                    //Apply other patches that depend on multiple settings
+                    if ((options?.TutorialHandling ?? ArchipelagoData.TutorialHandling.Vanilla) == ArchipelagoData.TutorialHandling.Vanilla
+                        && (options?.RandomizeRoleUnlocks ?? true))
                     {
-                        case 0:
+                        harmony.CreateClassProcessor(typeof(AfterBugAllRolesPatch)).Patch();
+                        harmony.CreateClassProcessor(typeof(NextLoopPatch)).Patch();
+                        Plugin.BepinLogger.LogInfo("AfterBugAllRolesPatch Applied!");
+                        Plugin.BepinLogger.LogInfo("NextLoopPatch Applied!");
+                    }
+                    //Apply patches based on choice-based options
+                    switch (options?.TutorialHandling)
+                    {
+                        case ArchipelagoData.TutorialHandling.Vanilla:
+                            harmony.CreateClassProcessor(typeof(TutorialLocationsPatch)).Patch();
+                            Plugin.BepinLogger.LogInfo("TutorialLocationsPatch Applied!");
+                            break;
+
+                        case ArchipelagoData.TutorialHandling.Skip:
+                        case ArchipelagoData.TutorialHandling.SkipAndRemoveLocations:
+                            harmony.CreateClassProcessor(typeof(SkipTutorialPatch)).Patch();
+                            Plugin.BepinLogger.LogInfo("SkipTutorialPatch Applied!");
+                            break;
+
+                        case null:
+                            Plugin.BepinLogger.LogError("Tutorial Handling Option not found! Treating as Vanilla");
+                            goto case ArchipelagoData.TutorialHandling.Vanilla;
+
+                        default:
+                            Plugin.BepinLogger.LogError("Unknown Tutorial Handling Setting! Treating as Vanilla!");
+                            goto case ArchipelagoData.TutorialHandling.Vanilla;
+                    }
+                    switch (options?.Goal)
+                    {
+                        case ArchipelagoData.Goal.NormalEnding:
                             harmony.CreateClassProcessor(typeof(NormalEndingGoal)).Patch();
                             Plugin.BepinLogger.LogInfo("NormalEndingGoal Patch Applied!");
                             break;
+
+                        case ArchipelagoData.Goal.RoleAchievements:
+                            if (!achievementsPatchAlreadyApplied)
+                            {
+                                harmony.CreateClassProcessor(typeof(HandleAchievementsPatch)).Patch();
+                                Plugin.BepinLogger.LogInfo("HandleAchievementsPatch Applied!");
+                            }
+                            break;
+
+                        case null:
+                            Plugin.BepinLogger.LogError("Goal Option not found! Treating as Normal Ending!");
+                            goto case ArchipelagoData.Goal.NormalEnding;
 
                         default:
                             Plugin.BepinLogger.LogError("Unknown goal setting! No goal patch applied!");
@@ -312,7 +395,6 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
                     sp.PlaySeInScript("se_square", 1f);
                     switch (id)
                     {
-                        //TODO: Move messages from LocationPatches to here
                         case 1:
                             sp.SetDialogScreen(50400U, sp.m_rs.GetScenarioTutorialText(15, 26, -1), 2, false);
                             break;
@@ -428,6 +510,46 @@ namespace GnosiaArchipelagoRandomizer.Archipelago
         public DeathLinkHandler GetDeathLinkHandler()
         {
             return DeathLinkHandler;
+        }
+
+        private bool CheckVersionCompatibility(string version)
+        {
+            string newerClientMessage =
+                "The version of the client you're using is much newer " +
+                "than the version of the AP World used to generate the MultiWorld " +
+                "and is almost certainly incompatible. Please either regenerate the " +
+                "MultiWorld with a newer version of the AP World (recommended) or " +
+                "downgrade your client.";
+
+            string olderClientMessage =
+                "The version of the client you're using is much older " +
+                "than the version of the AP World used to generate the MultiWorld " +
+                "and is almost certainly incompatible. Please update your client to " +
+                "avoid compatibility issues.";
+
+            if (version == null)
+            {
+                ArchipelagoConsole.LogMessage(newerClientMessage);
+                Plugin.BepinLogger.LogError(newerClientMessage);
+                return false;
+            }
+
+            Version pluginVersion = new Version(Plugin.PluginVersion);
+            Version apWorldVersion = new Version(version);
+
+            if (pluginVersion.Major != apWorldVersion.Major ||
+                pluginVersion.Minor != apWorldVersion.Minor)
+            {
+                string message = pluginVersion > apWorldVersion
+                    ? newerClientMessage
+                    : olderClientMessage;
+
+                ArchipelagoConsole.LogMessage(message);
+                Plugin.BepinLogger.LogError(message);
+                return false;
+            }
+
+            return true;
         }
     }
 }

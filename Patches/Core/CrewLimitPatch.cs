@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Reflection;
-using System.Text;
 using HarmonyLib;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
@@ -27,6 +25,8 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                 int[] yakuNum = base_gnosia.GetValue<int[]>();
                 if (people > Plugin.crew_max)
                     people = Plugin.crew_max;
+                else if (people < 5)
+                    people = 5;
                 while (yakuNum[7] * 2 + 2 >= people)
                     yakuNum[7]--;
                 base_people.SetValue(people);

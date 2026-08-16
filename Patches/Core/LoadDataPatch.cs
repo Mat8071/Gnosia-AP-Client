@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using GnosiaArchipelagoRandomizer.Archipelago;
+using HarmonyLib;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {
@@ -10,7 +11,8 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
         {
             //Do stuff here...
             Plugin.UpdateSafeGDItems(__instance);
-            Plugin.UpdateSkills(__instance);
+            if (ArchipelagoClient.ServerData.SlotData.Options?.RandomizeSkills ?? true)
+                Plugin.UpdateSkills(__instance);
             while (Plugin.instant_item_queue.Count > 0)
             {
                 //Get an item and use it now!

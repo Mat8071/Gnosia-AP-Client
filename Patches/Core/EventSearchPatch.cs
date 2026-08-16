@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using gnosia;
-using util;
-using HarmonyLib;
-using Archipelago.MultiClient.Net;
 using GnosiaArchipelagoRandomizer.Archipelago;
+using HarmonyLib;
+using util;
 
 namespace GnosiaArchipelagoRandomizer.Patches.Core
 {
@@ -111,8 +109,8 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                         flag = false;
                     }
                     //Check characters
-                    Dictionary<string, object> options = ArchipelagoClient.ServerData.GetSlotData();
-                    if (Convert.ToBoolean(options["randomize_character_unlocks"]))
+                    var options = ArchipelagoClient.ServerData.SlotData.Options;
+                    if (options?.RandomizeCharacterUnlocks ?? false)
                     {
                         foreach (int chara in needCharacterMap[searchContents.scenarioId])
                         {
@@ -125,16 +123,19 @@ namespace GnosiaArchipelagoRandomizer.Patches.Core
                     }
                     //Check roles
                     List<int> forbidden = new List<int>(searchContents.kinsiYaku);
-                    for (int role = 1; role < Plugin.found_roles.Length; role++)
+                    if (options?.RandomizeRoleUnlocks ?? true)
                     {
-                        if (!Plugin.found_roles[role])
+                        for (int role = 1; role < Plugin.found_roles.Length; role++)
                         {
-                            if (searchContents.needYaku.Contains(role))
+                            if (!Plugin.found_roles[role])
                             {
-                                flag = false;
-                                break;
+                                if (searchContents.needYaku.Contains(role))
+                                {
+                                    flag = false;
+                                    break;
+                                }
+                                forbidden.Add(role);
                             }
-                            forbidden.Add(role);
                         }
                     }
                     forbiddenMap[i] = forbidden;

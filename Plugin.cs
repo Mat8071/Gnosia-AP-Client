@@ -1,28 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
-using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
-using Archipelago.MultiClient.Net.Packets;
 using BepInEx;
 using BepInEx.Logging;
 using coreSystem;
 using GnosiaArchipelagoRandomizer.Archipelago;
+using GnosiaArchipelagoRandomizer.Patches;
+using GnosiaArchipelagoRandomizer.Patches.Core;
 using GnosiaArchipelagoRandomizer.Utils;
 using HarmonyLib;
-using UnityEngine;
-using sce.SampleUtil.Input;
-using Mono.Cecil;
-using GnosiaArchipelagoRandomizer.Patches.Core;
-using GnosiaArchipelagoRandomizer.Patches;
-using HarmonyLib.Tools;
-using System.Reflection;
-using System.Linq;
-using System.Linq.Expressions;
-using System.IO;
 using Newtonsoft.Json;
+using UnityEngine;
 
 namespace GnosiaArchipelagoRandomizer
 {
@@ -31,7 +23,7 @@ namespace GnosiaArchipelagoRandomizer
     {
         public const string PluginGUID = "com.mat8071.gnosiaAP";
         public const string PluginName = "GnosiaArchipelagoRandomizer";
-        public const string PluginVersion = "0.1.5";
+        public const string PluginVersion = "0.2.0";
 
         public const string ModDisplayInfo = $"{PluginName} v{PluginVersion}";
         private const string APDisplayInfo = $"Archipelago v{ArchipelagoClient.APVersion}";
@@ -50,8 +42,8 @@ namespace GnosiaArchipelagoRandomizer
         public static bool[] found_roles = new bool[9];
         public static bool[,] found_notes = new bool[15, 8];
 
-        private static ushort[] skill_flags = new ushort[19] 
-        { 
+        private static ushort[] skill_flags = new ushort[19]
+        {
             0, 0, 0, 0, 28, 38, 33, 27, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0,
         };
 
@@ -75,18 +67,13 @@ namespace GnosiaArchipelagoRandomizer
             //Apply core patches
             var harmony = new Harmony(PluginGUID + ".core");
 
-            harmony.CreateClassProcessor(typeof(AfterBugAllRolesPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CrewLimitCursorPatch)).Patch();
             harmony.CreateClassProcessor(typeof(CrewLimitPatch)).Patch();
             harmony.CreateClassProcessor(typeof(DefaultToSlotNamePatch)).Patch();
-            harmony.CreateClassProcessor(typeof(EventRequirementChangePatches)).Patch();
-            harmony.CreateClassProcessor(typeof(EventSearchInitializePatch)).Patch();
+            harmony.CreateClassProcessor(typeof(EventRequirementChangesPatch)).Patch();
             harmony.CreateClassProcessor(typeof(EventSearchPatch)).Patch();
             harmony.CreateClassProcessor(typeof(LoadDataPatch)).Patch();
-            harmony.CreateClassProcessor(typeof(LocationPatches)).Patch();
             harmony.CreateClassProcessor(typeof(MustConnectBeforeTitlePatch)).Patch();
-            harmony.CreateClassProcessor(typeof(NextDayPatch)).Patch();
-            harmony.CreateClassProcessor(typeof(NextLoopPatch)).Patch();
             harmony.CreateClassProcessor(typeof(NoTrophyPatch)).Patch();
             harmony.CreateClassProcessor(typeof(SaveLoadAPDataPatch)).Patch();
             harmony.CreateClassProcessor(typeof(SeparateSavesPatch)).Patch();
@@ -189,19 +176,10 @@ namespace GnosiaArchipelagoRandomizer
         public static void UpdateItems()
         {
             //Get settings
-            Dictionary<string, object> slotData = ArchipelagoClient.ServerData.GetSlotData();
-            bool randomize_character_unlocks = false;
-            if (slotData != null && slotData.ContainsKey("randomize_character_unlocks"))
-            {
-                randomize_character_unlocks = Convert.ToBoolean(slotData["randomize_character_unlocks"]);
-            }
-            else
-            {
-                BepinLogger.LogWarning("Update Items failed!");
-                return;
-            }
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            bool randomize_character_unlocks = options?.RandomizeCharacterUnlocks ?? false;
             //Reset crew max temporarily
-            crew_max = randomize_character_unlocks ? 1 : 5;
+            crew_max = randomize_character_unlocks ? 1 : options?.StartingCrewCount ?? 5;
             foreach (long item in inventory)
             {
                 if (item < 100)
@@ -263,42 +241,51 @@ namespace GnosiaArchipelagoRandomizer
 
         public static void UpdateSafeGDItems(gnosia.GameData gd)
         {
-            //Set character flags
-            for (int i = 1; i < found_notes.GetLength(0); i++)
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if (options?.RandomizeNotes ?? true)
             {
-                if (gd.personFromId[i] >= 0)
+                //Set character flags
+                for (int i = 1; i < found_notes.GetLength(0); i++)
                 {
-                    //Character is present in this loop
-                    gnosia.GameData.character current = gd.chara[gd.personFromId[i]];
-                    for (int j = 0; j < found_notes.GetLength(1); j++)
+                    if (gd.personFromId[i] >= 0)
                     {
-                        if (found_notes[i, j])
+                        //Character is present in this loop
+                        gnosia.GameData.character current = gd.chara[gd.personFromId[i]];
+                        for (int j = 0; j < found_notes.GetLength(1); j++)
                         {
-                            //Update flags
-                            current.allFlg |= (1UL << j);
+                            if (found_notes[i, j])
+                            {
+                                //Update flags
+                                current.allFlg |= (1UL << j);
+                            }
                         }
+                        //Set character back and update stats
+                        gd.chara[gd.personFromId[i]] = current;
+                        gd.CalGnos(gd.personFromId[i]);
                     }
-                    //Set character back and update stats
-                    gd.chara[gd.personFromId[i]] = current;
-                    gd.CalGnos(gd.personFromId[i]);
-                }
-                else
-                {
-                    //Character is NOT present in this loop
-                    for (int j = 0; j < found_notes.GetLength(1); j++)
+                    else
                     {
-                        if (found_notes[i, j])
-                            gd.baseData.s_chara_all_flg[i] |= (1UL << j);
+                        //Character is NOT present in this loop
+                        for (int j = 0; j < found_notes.GetLength(1); j++)
+                        {
+                            if (found_notes[i, j])
+                                gd.baseData.s_chara_all_flg[i] |= (1UL << j);
+                        }
                     }
                 }
             }
-            //Set role flags
-            if (gd.baseData.loop >= 14)
+            if (options?.RandomizeRoleUnlocks ?? true)
             {
-                for (int i = 1; i < found_roles.Length; i++)
+                //Set role flags
+                if (gd.baseData.loop >= 14)
                 {
-                    if (found_roles[i])
-                        gd.baseData.sce_all_flg |= (1UL << i);
+                    for (int i = 1; i < found_roles.Length; i++)
+                    {
+                        if (found_roles[i])
+                            gd.baseData.sce_all_flg |= (1UL << i);
+                    }
+                    if (found_roles[8] && (options?.TutorialHandling ?? ArchipelagoData.TutorialHandling.Vanilla) != ArchipelagoData.TutorialHandling.Vanilla)
+                        gd.baseData.sce_all_flg |= (1UL << 23); //Set bug tutorial as completed
                 }
             }
         }
@@ -353,7 +340,7 @@ namespace GnosiaArchipelagoRandomizer
                 if (!found_roles[i] && (i < 5 || i == 6 || i == 8))
                     gd.baseData.yakuNum[i] = 0;
         }
-        
+
         public static void ActivateInstantUseItem(gnosia.GameData gd, long itemId)
         {
             if (itemId == 11000)
@@ -399,10 +386,10 @@ namespace GnosiaArchipelagoRandomizer
             catch (Exception e)
             {
                 BepinLogger.LogError(e);
-                return new MessageData { message = "You completed a location! (Please reconnect)" , type = 1};
+                return new MessageData { message = "You completed a location! (Please reconnect)", type = 1 };
             }
         }
-        
+
         public static async Task<MessageData> ScoutMultipleLocationsAndGetMessage(params long[] ids)
         {
             //Try catch cause the client might've disconnected
@@ -429,7 +416,7 @@ namespace GnosiaArchipelagoRandomizer
             catch (Exception e)
             {
                 BepinLogger.LogError(e);
-                return new MessageData{message = "You completed some locations! (Please reconnect)", type = 1};
+                return new MessageData { message = "You completed some locations! (Please reconnect)", type = 1 };
             }
         }
 

@@ -1,8 +1,8 @@
-﻿using HarmonyLib;
+﻿using gnosia;
+using HarmonyLib;
 using UnityEngine;
-using gnosia;
 
-namespace GnosiaArchipelagoRandomizer.Patches.Core
+namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
     [HarmonyPatch(typeof(Jinro), "NextDay")]
     class NextDayPatch

@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 using GnosiaArchipelagoRandomizer.Archipelago;
-using gnosia;
-using UnityEngine;
-using setting;
-using GnosiaArchipelagoRandomizer.Patches.Core;
+using GnosiaArchipelagoRandomizer.Patches.Optional;
 using HarmonyLib;
+using setting;
+using UnityEngine;
 
 namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
 {
@@ -94,7 +92,7 @@ namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
 
                     Plugin.ArchipelagoClient.GetDeathLinkHandler().ToggleDeathLink();
 
-                    return enabled? CommandResult.Ok("DeathLink activated successfully.") : CommandResult.Ok("DeathLink deactivated successfully.");
+                    return enabled ? CommandResult.Ok("DeathLink activated successfully.") : CommandResult.Ok("DeathLink deactivated successfully.");
                 }
             });
             CommandRegistry.Register(new ConsoleCommand
@@ -163,7 +161,7 @@ namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
                     }
 
                     gnosia.GameData gd = null;
-                    
+
                     try
                     {
                         gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
@@ -205,7 +203,7 @@ namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
                     {
                         return CommandResult.Error($"Unknown Character '{character}'.");
                     }
-                    
+
                     if (!Roles.ContainsKey(role))
                     {
                         return CommandResult.Error($"Unknown Role '{role}'.");
@@ -400,53 +398,86 @@ namespace GnosiaArchipelagoRandomizer.Utils.ConsoleCommands
 
                 Execute = args =>
                 {
-                    //Get slot data and goal option
-                    Dictionary<string, object> slotData = ArchipelagoClient.ServerData.GetSlotData();
+                    //Get options and Goal option
+                    var options = ArchipelagoClient.ServerData.SlotData.Options;
 
-                    if (!slotData.ContainsKey("goal"))
+                    if (options.Goal == null)
                     {
                         return CommandResult.Error("The 'Goal' yaml option wasn't found in SlotData");
                     }
 
-                    if (!slotData.ContainsKey("required_note_percent"))
+                    if (options.RequiredNotePercent == null)
                     {
                         return CommandResult.Error("The 'Required Note Percent' yaml option wasn't found in SlotData");
                     }
 
-                    int goal = Convert.ToInt32(slotData["goal"]);
-                    float requiredNotePercent = Convert.ToSingle(slotData["required_note_percent"]);
+                    ArchipelagoData.Goal? goal = options?.Goal;
+                    float requiredNotePercent = (float)(options?.RequiredNotePercent ?? 80);
 
-                    string goalString = "";
+                    string goalName = "";
+                    string goalData = "";
                     switch (goal)
                     {
-                        case 0:
-                            goalString = "Normal Ending";
+                        case ArchipelagoData.Goal.NormalEnding:
+                            goalName = "Normal Ending";
+                            //Get gd
+                            gnosia.GameData gd = GameObject.Find("Application/GameLogManager/SaveDataManager").GetComponent<gnosia.GameData>();
+                            //Get internal stuff
+                            Type dataType = AccessTools.TypeByName("gnosia.Data");
+                            Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
+                            //Calculate progress
+                            int foundNotes = 0;
+                            int totalNotes = 0;
+                            for (int i = 1; i < 15; i++)
+                            {
+                                byte notes = MyUtils.GetCharaTotalNotes(chara, i);
+                                totalNotes += notes;
+                                for (int j = 0; j < notes; j++)
+                                {
+                                    if ((gd.baseData.s_chara_all_flg[i] & (1UL << j)) > 0UL)
+                                    {
+                                        foundNotes += 1;
+                                    }
+                                }
+                            }
+                            int requiredNotes = (int)(totalNotes * (requiredNotePercent / 100f));
+                            goalData = $"Found Notes: {foundNotes}/{requiredNotes}/{totalNotes} (found/required/total)\n";
                             break;
-                        default:
-                            return CommandResult.Error("Error while parsing the goal found in SlotData");
-                    }
+                        case ArchipelagoData.Goal.RoleAchievements:
+                            goalName = "Role Achievements";
+                            var completedAchievementNames = HandleAchievementsPatch.completedAchievements
+                                .Where(id => HandleAchievementsPatch.roleAchievementIdToName.ContainsKey(id))
+                                .Select(id => HandleAchievementsPatch.roleAchievementIdToName[id])
+                                .ToList();
 
-                    //Get internal stuff
-                    Type dataType = AccessTools.TypeByName("gnosia.Data");
-                    Array chara = (Array)AccessTools.Field(dataType, "Chara").GetValue(null);
+                            HashSet<string> excludedAchievementNames = new HashSet<string>(
+                                (options?.ExcludedAchievements ?? Enumerable.Empty<string>())
+                                .Concat(options?.ExcludeLocations ?? Enumerable.Empty<string>())
+                                .Select(name => name.Substring(0, name.Length - " Achievement".Length))
+                            );
+
+                            HashSet<string> neededAchievementNames = new HashSet<string>(
+                                HandleAchievementsPatch.allRoleAchievements
+                                .Where(id => HandleAchievementsPatch.roleAchievementIdToName.ContainsKey(id))
+                                .Select(id => HandleAchievementsPatch.roleAchievementIdToName[id])
+                                .Except(excludedAchievementNames)
+                            );
+
+                            goalData = "Achievements Needed to Goal: " +
+                            string.Join(", ", neededAchievementNames) +
+                            "\nCompleted Achievements: " +
+                                (completedAchievementNames.Count > 0
+                                    ? string.Join(", ", completedAchievementNames)
+                                    : "None");
+                            break;
+                        case null:
+                            return CommandResult.Error("Error: Goal option not found in SlotData");
+                        default:
+                            return CommandResult.Error("Error: Unknown Goal option");
+                    }
 
                     //Actually list goal info
-                    int foundNotes = 0;
-                    foreach (bool found in Plugin.found_notes)
-                    {
-                        if (found)
-                            foundNotes++;
-                    }
-                    int totalNotes = 0;
-                    for (int i = 1; i < 15; i++)
-                    {
-                        byte notes = EventRequirementChangePatches.GetCharaTotalNotes(chara, i);
-                        totalNotes += notes;
-                    }
-                    int requiredNotes = (int)(totalNotes * (requiredNotePercent / 100f));
-
-                    string text = $"Goal: {goalString}\n" +
-                                  $"Found Notes: {foundNotes}/{requiredNotes}/{totalNotes} (found/required/total)\n";
+                    string text = $"Goal: {goalName}\n{goalData}";
 
                     return CommandResult.Ok(text);
                 }

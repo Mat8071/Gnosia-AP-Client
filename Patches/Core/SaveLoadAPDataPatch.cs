@@ -1,10 +1,11 @@
-﻿using HarmonyLib;
-using systemService.saveData;
+﻿using System.Collections.Generic;
 using System.IO;
-using GnosiaArchipelagoRandomizer.Archipelago;
-using System.Collections.Generic;
-using Newtonsoft.Json;
 using System.Linq;
+using GnosiaArchipelagoRandomizer.Archipelago;
+using GnosiaArchipelagoRandomizer.Patches.Optional;
+using HarmonyLib;
+using Newtonsoft.Json;
+using systemService.saveData;
 
 namespace GnosiaArchipelagoRandomizer.Patches
 {
@@ -66,6 +67,13 @@ namespace GnosiaArchipelagoRandomizer.Patches
             }
             //Check all loaded locations (without any messages)
             _ = Plugin.CheckLocations(data.CheckedLocations.ToArray());
+            //Restore completed achievements set
+            if (data.CompletedAchievements != null)
+                HandleAchievementsPatch.completedAchievements.UnionWith(data.CompletedAchievements);
+            //Check if goaled on role achievements goal
+            var options = ArchipelagoClient.ServerData.SlotData.Options;
+            if ((options?.Goal ?? ArchipelagoData.Goal.NormalEnding) == ArchipelagoData.Goal.RoleAchievements)
+                HandleAchievementsPatch.CheckGoal();
         }
 
         [HarmonyPatch(typeof(SaveDataManager), "SaveData")]
@@ -74,12 +82,16 @@ namespace GnosiaArchipelagoRandomizer.Patches
         {
             //Get path
             string dir = Traverse.Create(__instance).Field("SaveDirectory").GetValue<string>();
-            string file_path = $"{dir}/save/slot{__instance.GetCurrentSlotId()}/ap_data.json";
+            dir = $"{dir}/save/slot{__instance.GetCurrentSlotId()}";
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            string file_path = $"{dir}/ap_data.json";
             //Save data
             APData data = new APData
             {
                 UsedItems = Plugin.items_used,
                 CheckedLocations = ArchipelagoClient.ServerData.CheckedLocations,
+                CompletedAchievements = HandleAchievementsPatch.completedAchievements,
             };
             string json = JsonConvert.SerializeObject(data, Formatting.Indented);
             File.WriteAllText(file_path, json);
@@ -90,5 +102,6 @@ namespace GnosiaArchipelagoRandomizer.Patches
     {
         public List<long> UsedItems;
         public HashSet<long> CheckedLocations;
+        public HashSet<int> CompletedAchievements;
     }
 }

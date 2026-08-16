@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using coreSystem;
-using setting;
-using HarmonyLib;
-using UnityEngine;
 using gnosia;
+using HarmonyLib;
+using setting;
+using UnityEngine;
 
-namespace GnosiaArchipelagoRandomizer.Patches.Core
+namespace GnosiaArchipelagoRandomizer.Patches.Optional
 {
     [HarmonyPatch(typeof(MakeLoopScenario), "SetParam")]
     class NextLoopPatch

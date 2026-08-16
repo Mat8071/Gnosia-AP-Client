@@ -1,9 +1,8 @@
 ﻿using System;
-using HarmonyLib;
-using UnityEngine;
 using System.Reflection;
-using gnosia;
+using HarmonyLib;
 using setting;
+using UnityEngine;
 
 namespace GnosiaArchipelagoRandomizer.Patches.DeathLink
 {
